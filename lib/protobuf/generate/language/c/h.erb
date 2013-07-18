@@ -1,0 +1,43 @@
+#pragma once
+
+#include <stdint.h>
+
+#ifdef __cplusplus
+  extern "C" {
+#endif
+<%
+  tree.each do |expression|
+    if package = expression[:package]
+      namespace package[:name]
+    elsif enum = expression[:enum]
+%>
+
+  // <%= file_line enum[:name] %>
+  typedef enum {
+    <% enum[:fields].each do |field| %>
+      <%= namespaced_constant enum[:name], field[:name] %> = <%= field[:tag] %>,
+    <% end %>
+  } <%= namespaced_type enum[:name] %>;
+<%
+    elsif message = expression[:message]
+%>
+
+  // <%= file_line message[:name] %>
+  typedef struct <%= namespaced_type message[:name] %> {
+    <% message[:fields].each do |field| %>
+      <%= field[:type] %> <%= field[:name] %>;
+    <% end %>
+  } <%= namespaced_type message[:name] %>;
+
+  // TODO: Replace int with an protobuf_(encode|decode)_t type.
+  // TODO: Move encode_size into result type.
+  int <%= namespaced_function message[:name], 'encode' %>(const <%= namespaced_type message[:name] %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
+  int <%= namespaced_function message[:name], 'decode' %>(<%= namespaced_type message[:name] %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
+<%
+    end
+  end
+%>
+
+#ifdef __cplusplus
+  }
+#endif
