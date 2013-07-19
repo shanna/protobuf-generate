@@ -18,10 +18,10 @@ module Protobuf
           def constant *name; snake_case(*name).upcase end
           def function *name; snake_case *name         end
 
-          def namespaced_type     *name; type     namespace, *name end
-          def namespaced_variable *name; variable namespace, *name end
-          def namespaced_constant *name; constant namespace, *name end
-          def namespaced_function *name; function namespace, *name end
+          def namespaced_type     *name; type     package, *name end
+          def namespaced_variable *name; variable package, *name end
+          def namespaced_constant *name; constant package, *name end
+          def namespaced_function *name; function package, *name end
 
           protected
             def snake_case *name
@@ -29,8 +29,9 @@ module Protobuf
             end
         end # Conventions
 
-        def initialize ast, conventions = Protobuf::Generator::C::Conventions
-          super Class.new(ast){ include conventions }
+        def initialize ast, conventions = Conventions
+          ast.extend(conventions)
+          super ast
         end
       end # C
     end # Langage

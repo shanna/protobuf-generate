@@ -3,8 +3,11 @@ require 'parslet'
 module Protobuf
   module Generate
     class Parser < Parslet::Parser
-      rule(:space)   { match('\s').repeat(1) }
-      rule(:spaces?) { space.maybe }
+      rule(:newline)  { match('\n').repeat(1) }
+      rule(:space)    { match('\s').repeat(1) }
+      rule(:spaces?)  { space.maybe }
+
+      rule(:comment)   { str('//') >> (newline.absent? >> any).repeat >> spaces? }
 
       rule(:equals)        { str('=') >> spaces? }
       rule(:bracket_open)  { str('{') >> spaces? }
@@ -28,7 +31,7 @@ module Protobuf
       rule(:field_type)        { (identifier >> spaces?).as(:type) }
       rule(:field_label)       { (str('required') | str('optional') | str('repeated')) >> spaces? }
 
-      rule(:message_field)       { field_label >> field_type >> identifier.as(:name) >> spaces? >> equals >> integer.as(:tag) >> spaces? >> field_option_list.maybe >> str(';') }
+      rule(:message_field)       { field_label >> field_type >> identifier.as(:name) >> spaces? >> equals >> integer.as(:tag) >> spaces? >> field_option_list.maybe >> str(';') >> spaces? >> comment.maybe }
       rule(:message_field_list)  { (message_field >> spaces?).repeat(1).as(:fields) }
       rule(:message)             { (str('message') >> spaces? >> identifier.as(:name) >> spaces? >> bracket_open >> message_field_list >> bracket_close >> spaces?).as(:message) }
 
@@ -38,7 +41,7 @@ module Protobuf
 
       rule(:package) { (str('package') >> spaces? >> identifier_dot_list.as(:name) >> spaces? >> str(';') >> spaces?).as(:package) }
 
-      rule(:expression) { spaces? >> (package | enum | message).repeat }
+      rule(:expression) { spaces? >> (comment | package | enum | message).repeat }
       root(:expression)
     end # Parser
   end # Generate

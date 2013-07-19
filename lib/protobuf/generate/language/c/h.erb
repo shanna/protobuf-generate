@@ -6,13 +6,13 @@
   extern "C" {
 #endif
 <%
-  tree.each do |expression|
+  each do |expression|
     if package = expression[:package]
-      namespace package[:name]
+      package package[:name]
     elsif enum = expression[:enum]
 %>
 
-  // <%= file_line enum[:name] %>
+  // <%# TODO: file_line enum[:name] %>
   typedef enum {
     <% enum[:fields].each do |field| %>
       <%= namespaced_constant enum[:name], field[:name] %> = <%= field[:tag] %>,
@@ -22,7 +22,7 @@
     elsif message = expression[:message]
 %>
 
-  // <%= file_line message[:name] %>
+  // <%# TODO: file_line message[:name] %>
   typedef struct <%= namespaced_type message[:name] %> {
     <% message[:fields].each do |field| %>
       <%= field[:type] %> <%= field[:name] %>;

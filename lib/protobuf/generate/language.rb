@@ -25,8 +25,12 @@ module Protobuf
         @ast = ast
       end
 
+      def templates
+        self.class.templates
+      end
+
       def generate eruby_filename
-        Erubis::TinyEruby.new(File.read(eruby_filename)).evaluate(@ast)
+        Erubis::Eruby.new(File.read(eruby_filename)).evaluate(@ast)
       end
     end # Language
   end # Generate
