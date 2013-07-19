@@ -3,9 +3,9 @@
 .DS_Store
 *.swp
 *.swo
-bin/
 gems/
 tmp/
 *.gem
 
+bin/*
 !bin/protobuf-generate

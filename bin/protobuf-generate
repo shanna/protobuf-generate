@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+$: << File.join(File.dirname(__FILE__), '..', 'lib')
+require 'protobuf-generate'
+
+# Usage.
+unless ARGV.size == 2
+  puts DATA.read
+  exit 0
+end
+
+unless generator = Protobuf::Generate::Language.find(ARGV[0])
+  puts 'ERROR: Unknown language "%s".' % ARGV[0]
+  exit -1
+end
+
+begin
+  ast = Protobuf::Generate::Parser.new.parse(File.read(ARGV[1]))
+  gen = generator.new(ast)
+
+  # TODO: Think about how best to have generator deal with multiple templates. e.g. *.c and *.h
+  gen.templates.each do |template|
+    puts gen.generate(template)
+  end
+rescue Parslet::ParseFailed => error
+  puts error.cause.ascii_tree
+end
+
+__END__
+
+Generate native code from protobuf files.
+
+usage: protobuf-generate <language> <proto>
+  language - Native language to generate.
+  proto    - The protobuf file to generate from.
