@@ -29,7 +29,7 @@ module Protobuf
       rule(:field_option)      { str('default').as(:name) >> spaces? >> equals >> constant.as(:value) }
       rule(:field_option_list) { (str('[') >> spaces? >> (field_option >> spaces?).repeat(1) >> spaces? >> str(']') >> spaces?).as(:options) }
       rule(:field_type)        { (identifier >> spaces?).as(:type) }
-      rule(:field_label)       { (str('required') | str('optional') | str('repeated')) >> spaces? }
+      rule(:field_label)       { (str('required') | str('optional') | str('repeated')).as(:label) >> spaces? }
 
       rule(:message_field)       { field_label >> field_type >> identifier.as(:name) >> spaces? >> equals >> integer.as(:tag) >> spaces? >> field_option_list.maybe >> str(';') >> spaces? >> comment.maybe }
       rule(:message_field_list)  { (message_field >> spaces?).repeat(1).as(:fields) }
