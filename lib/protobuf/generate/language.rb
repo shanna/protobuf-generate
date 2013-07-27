@@ -5,11 +5,11 @@ module Protobuf
     class Language
       module Helpers
         def type_message? type
-          find{|e| e.key?(:message) && e[:name] == type }
+          !!find{|e| e.key?(:message) && e[:message][:name].to_s == type.to_s }
         end
 
         def type_enum? type
-          find{|e| e.key?(:enum) && e[:name] == type }
+          !!find{|e| e.key?(:enum) && e[:enum][:name].to_s == type.to_s }
         end
       end
 
