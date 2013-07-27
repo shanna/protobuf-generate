@@ -3,15 +3,19 @@ require 'parslet'
 module Protobuf
   module Generate
     class Parser < Parslet::Parser
-      rule(:newline)  { match('\n').repeat(1) }
-      rule(:space)    { match('\s').repeat(1) }
-      rule(:spaces?)  { space.maybe }
+      rule(:newline)     { match('\n').repeat(1) }
+      rule(:whitespace)  { match('\s').repeat(1) }
+      rule(:whitespace?) { whitespace.maybe }
+      rule(:space)       { match('[\t ]').repeat(1) }
+      rule(:space?)      { space.maybe }
 
-      rule(:comment)   { str('//') >> (newline.absent? >> any).repeat >> spaces? }
+      rule(:comment_option)      { str('@') >> identifier.as(:name) >> space? >> equals >> constant.as(:value) }
+      rule(:comment_option_list) { (comment_option >> space?).repeat(1).as(:options) }
+      rule(:comment)             { (str('//') >> (newline.absent? >> (comment_option_list | any)).repeat).as(:comment) >> whitespace? }
 
-      rule(:equals)        { str('=') >> spaces? }
-      rule(:bracket_open)  { str('{') >> spaces? }
-      rule(:bracket_close) { str('}') >> spaces? }
+      rule(:equals)        { str('=') >> whitespace? }
+      rule(:bracket_open)  { str('{') >> whitespace? }
+      rule(:bracket_close) { str('}') >> whitespace? }
 
       rule(:digit)   { match('[0-9]') }
       rule(:integer) { str('-').maybe >> match('[1-9]') >> digit.repeat }
@@ -26,22 +30,22 @@ module Protobuf
 
       rule(:constant) { identifier | integer | float | string }
 
-      rule(:field_option)      { str('default').as(:name) >> spaces? >> equals >> constant.as(:value) }
-      rule(:field_option_list) { (str('[') >> spaces? >> (field_option >> spaces?).repeat(1) >> spaces? >> str(']') >> spaces?).as(:options) }
-      rule(:field_type)        { (identifier >> spaces?).as(:type) }
-      rule(:field_label)       { (str('required') | str('optional') | str('repeated')).as(:label) >> spaces? }
+      rule(:field_option)      { str('default').as(:name) >> whitespace? >> equals >> constant.as(:value) }
+      rule(:field_option_list) { (str('[') >> whitespace? >> (field_option >> whitespace?).repeat(1) >> whitespace? >> str(']') >> whitespace?).as(:options) }
+      rule(:field_type)        { (identifier >> whitespace?).as(:type) }
+      rule(:field_label)       { (str('required') | str('optional') | str('repeated')).as(:label) >> whitespace? }
 
-      rule(:message_field)       { field_label >> field_type >> identifier.as(:name) >> spaces? >> equals >> integer.as(:tag) >> spaces? >> field_option_list.maybe >> str(';') >> spaces? >> comment.maybe }
-      rule(:message_field_list)  { (message_field >> spaces?).repeat(1).as(:fields) }
-      rule(:message)             { (str('message') >> spaces? >> identifier.as(:name) >> spaces? >> bracket_open >> message_field_list >> bracket_close >> spaces?).as(:message) }
+      rule(:message_field)       { field_label >> field_type >> identifier.as(:name) >> whitespace? >> equals >> integer.as(:tag) >> whitespace? >> field_option_list.maybe >> str(';') >> space? >> comment.maybe }
+      rule(:message_field_list)  { (message_field >> whitespace?).repeat(1).as(:fields) }
+      rule(:message)             { (str('message') >> whitespace? >> identifier.as(:name) >> whitespace? >> bracket_open >> message_field_list >> bracket_close >> whitespace?).as(:message) }
 
-      rule(:enum_field)      { identifier.as(:name) >> spaces? >> equals >> integer.as(:tag) >> spaces? >> str(';') }
-      rule(:enum_field_list) { (enum_field >> spaces?).repeat(1).as(:fields) }
-      rule(:enum)            { (str('enum') >> spaces? >> identifier.as(:name) >> spaces? >> bracket_open >> enum_field_list >> bracket_close >> spaces?).as(:enum) }
+      rule(:enum_field)      { identifier.as(:name) >> whitespace? >> equals >> integer.as(:tag) >> whitespace? >> str(';') }
+      rule(:enum_field_list) { (enum_field >> whitespace?).repeat(1).as(:fields) }
+      rule(:enum)            { (str('enum') >> whitespace? >> identifier.as(:name) >> whitespace? >> bracket_open >> enum_field_list >> bracket_close >> whitespace?).as(:enum) }
 
-      rule(:package) { (str('package') >> spaces? >> identifier_dot_list.as(:name) >> spaces? >> str(';') >> spaces?).as(:package) }
+      rule(:package) { (str('package') >> whitespace? >> identifier_dot_list.as(:name) >> whitespace? >> str(';') >> whitespace?).as(:package) }
 
-      rule(:expression) { spaces? >> (comment | package | enum | message).repeat }
+      rule(:expression) { whitespace? >> (comment | package | enum | message).repeat }
       root(:expression)
     end # Parser
   end # Generate
