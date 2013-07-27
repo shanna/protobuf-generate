@@ -3,6 +3,16 @@ require 'erubis'
 module Protobuf
   module Generate
     class Language
+      module Helpers
+        def type_message? type
+          find{|e| e.key?(:message) && e[:name] == type }
+        end
+
+        def type_enum? type
+          find{|e| e.key?(:enum) && e[:name] == type }
+        end
+      end
+
       def self.match language = nil
         @language = language if language
         @language
@@ -30,7 +40,9 @@ module Protobuf
       end
 
       def generate eruby_filename
-        Erubis::Eruby.new(File.read(eruby_filename)).evaluate(@ast)
+        ast = @ast
+        ast.extend(Helpers)
+        Erubis::Eruby.new(File.read(eruby_filename)).evaluate(ast)
       end
     end # Language
   end # Generate
