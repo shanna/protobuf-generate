@@ -25,7 +25,36 @@
   // <%# TODO: file_line message[:name] %>
   typedef struct <%= namespaced_type message[:name] %> {
     <% message[:fields].each do |field| %>
-      <%= field[:type] %> <%= field[:name] %>;
+      <% case field[:type].to_s %>
+        <% when type_message?(field[:type]) %>
+          <%= namespaced_type field[:type] %> <%= field[:name] %>;
+        <% when type_enum?(field[:type]) %>
+          <%= namespaced_type field[:type] %> <%= field[:name] %>;
+        <% when 'double' %>
+          double <%= field[:name] %>;
+        <% when 'float' %>
+          float <%= field[:name] %>;
+        <% when /int32|sint32|sfixed32/ %>
+          int32_t <%= field[:name] %>;
+        <% when /int64|sint64|sfixed64/ %>
+          int64_t <%= field[:name] %>;
+        <% when /uint32|fixed32/ %>
+          uint32_t <%= field[:name] %>;
+        <% when /uint64|fixed64/ %>
+          uint64_t <%= field[:name] %>;
+        <% when 'bool' %>
+          bool <%= field[:name] %>;
+        <% when 'string' %>
+          struct {
+            char   data[ <%= (field.fetch(:comment, [{options: []}])).inspect %> ];
+            size_t size;
+          } <%= field[:name] %>;
+        <% when 'bytes' %>
+          struct {
+            uint8_t data[];
+            size_t  size;
+          } <%= field[:name] %>;
+      <% end %>
     <% end %>
   } <%= namespaced_type message[:name] %>;
 
