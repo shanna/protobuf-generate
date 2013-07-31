@@ -14,13 +14,16 @@ unless generator = Protobuf::Generate::Language.find(ARGV[0])
 end
 
 begin
-  ast = Protobuf::Generate::Parser.new.parse(File.read(ARGV[1]))
-  gen = generator.new(ast)
+  tree = Protobuf::Generate::Parser.new.parse(File.read(ARGV[1]))
+  ast  = Protobuf::Generate::Transform.new.apply(tree)
+  require 'pp'
+  pp ast
+  #gen = generator.new(ast)
 
   # TODO: Think about how best to have generator deal with multiple templates. e.g. *.c and *.h
-  gen.templates.each do |template|
-    puts gen.generate(template)
-  end
+  #gen.templates.each do |template|
+  #  puts gen.generate(template)
+  #end
 rescue Parslet::ParseFailed => error
   puts error.cause.ascii_tree
 end

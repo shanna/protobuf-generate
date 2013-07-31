@@ -1,0 +1,311 @@
+package lifx.protocol.pb;
+
+// Util.
+
+enum Code {
+  Ok              = 1;
+  BadRequest      = 2;
+  Unauthorized    = 3;
+  TooManyRequests = 4;
+  InternalError   = 5;
+}
+
+enum Waveform {
+  Sine     = 1;
+  HalfSine = 2;
+  Triangle = 3;
+  Saw      = 4;
+  Pulse    = 5;
+}
+
+message AuthPlain {
+  required string user = 1; // @size_max = 32
+  required string pass = 2; // @size_max = 32
+}
+
+message AuthKey {
+  required bytes key = 1; // @size_max = 32
+}
+
+message Hsbk {
+  required float   h = 1; // 0 - 1 Hue.
+  required float   s = 2; // 0 - 1 Saturation.
+  required float   b = 3; // 0 - 1 Brightness.
+  required fixed32 k = 4; // 0 - ? Kelvin.
+}
+
+// Commands.
+
+// @message_id = 100
+// message CommandGateway {
+//   Empty.
+// }
+
+// @message_id = 112
+// message CommandTag {
+//   Empty.
+// }
+
+// @message_id = 113
+message CommandTagAssociate {
+  required fixed64 slots = 1; // slot bitmask
+}
+
+// @message_id = 114
+message CommandTagLabel {
+  required fixed32 slot = 1; // 0 - 63 slot id
+  optional string  name = 2; // @size_max = 32
+}
+
+// @message_id = 116
+// message CommandPowerUsage {
+//   Empty.
+// }
+
+// @message_id = 119
+message CommandConnect {
+  optional AuthPlain plain = 101;
+  optional AuthKey   key   = 102;
+}
+
+// @message_id = 120
+message CommandSub {
+  required bytes site   = 1; // @size_max = 32
+  required bytes target = 2; // @size_max = 32
+}
+
+// @message_id = 121
+message CommandUnsub {
+  required bytes site   = 1; // @size_max = 32
+  required bytes target = 2; // @size_max = 32
+}
+
+// @message_id = 122
+// message CommandLight {
+//   Empty. Touches light giving you the CommandLightState back.
+// }
+
+// @message_id = 130
+message CommandDeviceInfo {
+  optional string name = 1; // @size_max = 32
+}
+
+// @message_id = 131
+message CommandLightAdd {
+  required Waveform waveform   = 1;                 // Sine, Square, Triangle, Saw... as above.
+  optional Hsbk     hsbk_min   = 2;                 // Modulation min. Optionally current colour is used.
+  required Hsbk     hsbk_max   = 3;                 // Modulation max.
+  required fixed32  period     = 4;                 // Milliseconds per cycle.
+  required float    cycles     = 5;                 // Number of cycles.
+  optional float    duty_cycle = 6 [default = 0.5]; // Shape of the wave.
+  required bool     sticky     = 7;                 // Keep final colour at end of duration or pop command.
+}
+
+// @message_id = 132
+message CommandLightFilter {
+  required float   brightness = 1; // Percentage to alter current brightness.
+  required fixed32 duration   = 2; // Interpolation milliseconds.
+}
+
+// @message_id = 133
+message CommandGatewayPair {
+  required fixed32 seconds = 1; // Seconds to stay in pairing/promiscuous mode.
+}
+
+// @message_id = 134
+message CommandPower {
+  required float level = 1; // 0 - 1 power level, 0 or 1 for switch
+}
+
+// @message_id = 135
+message CommandWifiConfig {
+  required string ssid       = 1; // @size_max = 32
+  required string passphrase = 2; // @size_max = 32
+}
+
+// @message_id = 136
+message CommandGatewaySite {
+  required bytes site = 1; // @size_max = 32
+}
+
+// @message_id = 137
+message CommandLightTemperature {}
+
+// @message_id = 138
+message CommandLightRailVoltage {}
+
+// @message_id = 139
+message CommandLightDimmingSignal {}
+
+// @message_id = 140
+message CommandLightAmbient {}
+
+// @message_id = 141
+message CommandBoardEeprom {}
+
+// @message_id = 142
+message CommandBoardMcuRailVoltage {}
+
+// @message_id = 143
+message CommandBoardVersion {}
+
+// @message_id = 144
+message CommandBoardSwitchPosition {}
+
+// @message_id = 145
+message CommandBoardPowerOffDuration {}
+
+// @message_id = 146
+message CommandBoardDummyLoad {
+  required bool on = 1;
+}
+
+// @message_id = 145
+message CommandWifiSignal {}
+
+// @message_id = 146
+message CommandWifiVersion {}
+
+// @message_id = 147
+message CommandMeshSignal {}
+
+// @message_id = 148
+message CommandMeshVersion {}
+
+
+// States.
+
+// @message_id = 1000
+message StateGateway {
+  required string device_ipv6 = 1; // @size_max = 40
+}
+
+// @message_id = 1012
+message StateTag {
+  required fixed64 slots = 1;
+}
+
+// @message_id = 1013
+message StateTagAssociate {
+  required fixed64 slots = 1;
+}
+
+// @message_id = 1014
+message StateTagLabel {
+  required fixed32 slot = 1;
+  required string  name = 2; // @size_max = 32
+}
+
+// @message_id = 1016
+message StatePowerUsage {
+  required fixed32 power   = 1; // Milliwatts. Total power used.
+  required fixed32 light   = 2; // Lumens. Total light emitted by device.
+  required fixed32 powered = 3; // Seconds. Total seconds of powered run time.
+  required fixed32 lit     = 4; // Seconds. Total seconds light has be lit.
+}
+
+// @message_id = 1019
+message StateConnect {
+  required Code    code = 1;
+  optional AuthKey key  = 2;
+}
+
+// @message_id = 1020
+message StateSub {
+  required Code  code   = 1;
+  required bytes site   = 2; // @size_max = 6
+  required bytes target = 3; // @size_max = 8
+}
+
+// @message_id = 1021
+message StateUnsub {
+  required Code  code   = 1;
+  required bytes site   = 2; // @size_max = 6
+  required bytes target = 3; // @size_max = 8
+}
+
+// @message_id = 1022
+message StateLight {
+  required Hsbk    hsbk  = 1;
+  required fixed32 power = 2; // Milliwatts.
+  required fixed32 light = 3; // Lumens.
+}
+
+// @message_id = 1030
+message StateDeviceInfo {
+  required string   name     = 1; // @size_max = 32
+  required fixed32  vendor   = 2;
+  required fixed32  product  = 3;
+}
+
+// @message_id = 1031
+message StateGatewayPair {
+  required fixed32 seconds = 1; // Seconds left in pairing/promiscuous mode.
+}
+
+// @message_id = 1032
+message StatePower {
+  required float level = 1; // 0 - 1 power level, 0 or 1 for switch
+}
+
+// @message_id = 1037
+message StateLightTemperature {
+}
+
+// @message_id = 1038
+message StateLightRailVoltage {
+}
+
+// @message_id = 1039
+message StateLightDimmingSignal {
+}
+
+// @message_id = 1040
+message StateLightAmbient {
+}
+
+// @message_id = 1041
+message StateBoardEeprom {
+}
+
+// @message_id = 1042
+message StateBoardMcuRailVoltage {}
+
+// @message_id = 1043
+message StateBoardVersion {
+}
+
+// @message_id = 1044
+message StateBoardSwitchPosition {
+}
+
+// @message_id = 1045
+message StateBoardPowerOffDuration {
+}
+
+// @message_id = 1046
+message StateBoardDummyLoad {
+  required bool on = 1 [default = false]; // @comment_option = 12
+}
+
+// @message_id = 1045
+message StateWifiSignal {
+}
+
+// @message_id = 1046
+message StateWifiVersion {
+}
+
+// @message_id = 1047
+message StateMeshSignal {
+}
+
+// @asf = 1234
+
+// Testing.
+// @some_other_option = 1123
+// @message_id = 1048
+message StateMeshVersion {
+  required string test = 1; // @size_max = 123
+}
+
