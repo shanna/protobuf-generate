@@ -6,62 +6,60 @@
   extern "C" {
 #endif
 <%
-  each do |expression|
-    if package = expression[:package]
-      package package[:name]
-    elsif enum = expression[:enum]
+  each do |exp|
+    if exp.kind_of?(Protobuf::Generate::Ast::Package)
+      package exp.name
+    elsif exp.kind_of?(Protobuf::Generate::Ast::Enum)
 %>
 
-  // <%# TODO: file_line enum[:name] %>
   typedef enum {
-    <% enum[:fields].each do |field| %>
-      <%= namespaced_constant enum[:name], field[:name] %> = <%= field[:tag] %>,
+    <% exp.fields.each do |field| %>
+      <%= namespaced_constant exp.name, field.name %> = <%= field.tag %>,
     <% end %>
-  } <%= namespaced_type enum[:name] %>;
+  } <%= namespaced_type exp.name %>;
 <%
-    elsif message = expression[:message]
+    elsif exp.kind_of?(Protobuf::Generate::Ast::Message)
 %>
 
-  // <%# TODO: file_line message[:name] %>
-  typedef struct <%= namespaced_type message[:name] %> {
-    <% message[:fields].each do |field| %>
-      <% case field[:type].to_s %>
-        <% when type_message?(field[:type]) %>
-          <%= namespaced_type field[:type] %> <%= field[:name] %>;
-        <% when type_enum?(field[:type]) %>
-          <%= namespaced_type field[:type] %> <%= field[:name] %>;
+  typedef struct <%= namespaced_type exp.name %> {
+    <% exp.fields.each do |field| %>
+      <% case field.type %>
+        <% when type_message?(field.type) %>
+          <%= namespaced_type field.type %> <%= field.name %>;
+        <% when type_enum?(field.type) %>
+          <%= namespaced_type field.type %> <%= field.name %>;
         <% when 'double' %>
-          double <%= field[:name] %>;
+          double <%= field.name %>;
         <% when 'float' %>
-          float <%= field[:name] %>;
+          float <%= field.name %>;
         <% when /int32|sint32|sfixed32/ %>
-          int32_t <%= field[:name] %>;
+          int32_t <%= field.name %>;
         <% when /int64|sint64|sfixed64/ %>
-          int64_t <%= field[:name] %>;
+          int64_t <%= field.name %>;
         <% when /uint32|fixed32/ %>
-          uint32_t <%= field[:name] %>;
+          uint32_t <%= field.name %>;
         <% when /uint64|fixed64/ %>
-          uint64_t <%= field[:name] %>;
+          uint64_t <%= field.name %>;
         <% when 'bool' %>
-          bool <%= field[:name] %>;
+          bool <%= field.name %>;
         <% when 'string' %>
           struct {
-            char   data[ <%= (field.fetch(:comment, [{options: []}])).inspect %> ];
+            char   data[<%= field.meta["size_max"] %>];
             size_t size;
-          } <%= field[:name] %>;
+          } <%= field.name %>;
         <% when 'bytes' %>
           struct {
-            uint8_t data[];
+            uint8_t data[<%= field.meta["size_max"] %>];
             size_t  size;
-          } <%= field[:name] %>;
+          } <%= field.name %>;
       <% end %>
     <% end %>
-  } <%= namespaced_type message[:name] %>;
+  } <%= namespaced_type exp.name %>;
 
   // TODO: Replace int with an protobuf_(encode|decode)_t type.
   // TODO: Move encode_size into result type.
-  int <%= namespaced_function message[:name], 'encode' %>(const <%= namespaced_type message[:name] %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
-  int <%= namespaced_function message[:name], 'decode' %>(<%= namespaced_type message[:name] %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
+  int <%= namespaced_function exp.name, 'encode' %>(const <%= namespaced_type exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
+  int <%= namespaced_function exp.name, 'decode' %>(<%= namespaced_type exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
 <%
     end
   end

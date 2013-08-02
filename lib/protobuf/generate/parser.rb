@@ -70,16 +70,17 @@ module Protobuf
       rule(message_field: subtree(:f)) do
         Ast::MessageField.new(
           *f.values_at(:label, :type, :name, :tag).map(&:to_s),
-          f[:comment] && Hash[*f[:comment].map{|c| c[:meta]}.flatten.compact],
-          f[:options] && Hash[*f[:options].flatten.compact]
+          f[:comment].kind_of?(Array) ? Hash[*f[:comment].map{|c| c[:meta]}.flatten.compact] : {},
+          f[:options].kind_of?(Array) ? Hash[*[f[:options]].flatten.compact] : {}
         )
       end
 
       rule(message: subtree(:message)) do
         Ast::Message.new(
           message[:name].to_s,
-          message[:comments] && Hash[*message[:comments].map{|c| c[:meta]}.flatten.compact],
-          message[:fields]
+          # TODO: Parslet should return nil not "" when empty. Figure out what's going on.
+          message[:comments].kind_of?(Array) ? Hash[*message[:comments].map{|c| c[:meta]}.flatten.compact] : {},
+          [*message[:fields]].compact
         )
       end
 

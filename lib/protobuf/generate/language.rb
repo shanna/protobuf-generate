@@ -5,11 +5,11 @@ module Protobuf
     class Language
       module Helpers
         def type_message? type
-          !!find{|e| e.key?(:message) && e[:message][:name].to_s == type.to_s }
+          find{|e| e.kind_of?(Protobuf::Generate::Ast::Message) && e.name == type }
         end
 
         def type_enum? type
-          !!find{|e| e.key?(:enum) && e[:enum][:name].to_s == type.to_s }
+          find{|e| e.kind_of?(Protobuf::Generate::Ast::Enum) && e.name.to_s == type.to_s }
         end
       end
 
@@ -42,7 +42,7 @@ module Protobuf
       def generate eruby_filename
         ast = @ast
         ast.extend(Helpers)
-        Erubis::Eruby.new(File.read(eruby_filename)).evaluate(ast)
+        Erubis::Eruby.new(File.read(eruby_filename), filename: eruby_filename).evaluate(ast)
       end
     end # Language
   end # Generate
