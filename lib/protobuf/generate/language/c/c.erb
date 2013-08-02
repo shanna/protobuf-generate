@@ -20,18 +20,17 @@
   void <%= namespaced_function exp.name, 'init', 'optional', 'attributes' %>(<%= namespaced_type exp.name %> *_pb) {
     <% exp.fields.each do |field| %>
       <% if field.optional? %>
-        <% case field.type %>
-          <% when type_message?(field.type) %>
-            <%= namespaced_function field.name, 'init', 'optional', 'attributes' %>(&_pb-><%= field.name %>);
-          <% when type_enum?(field.type) %>
-            // TODO: Optional enum.
-          <% when 'bool' %>
-            _pb-><%= field.name %> = <%= field.options.fetch(:default, 'false') %>;
-          <% when 'string', 'bytes' %>
-            _pb-><%= field.name %>.data = <%= field.options.fetch('default', '""') %>;
-            _pb-><%= field.name %>.size = <%= field.options.fetch('default', '').bytesize %>;
-          <% else %>
-            _pb-><%= field.name %> = 0;
+        <% if type_message?(field.type) %>
+          <%= namespaced_function field.name, 'init', 'optional', 'attributes' %>(&_pb-><%= field.name %>);
+        <% elsif type_enum?(field.type) %>
+          // TODO: Optional enum.
+        <% elsif field.type =~ /bool/ %>
+          _pb-><%= field.name %> = <%= field.options.fetch(:default, 'false') %>;
+        <% elsif field.type =~ /string|bytes/ %>
+          _pb-><%= field.name %>.data = <%= field.options.fetch('default', '""') %>;
+          _pb-><%= field.name %>.size = <%= field.options.fetch('default', '').bytesize %>;
+        <% else %>
+          _pb-><%= field.name %> = 0;
         <% end %>
       <% end %>
     <% end %>

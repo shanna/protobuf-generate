@@ -23,35 +23,34 @@
 
   typedef struct <%= namespaced_type exp.name %> {
     <% exp.fields.each do |field| %>
-      <% case field.type %>
-        <% when type_message?(field.type) %>
-          <%= namespaced_type field.type %> <%= field.name %>;
-        <% when type_enum?(field.type) %>
-          <%= namespaced_type field.type %> <%= field.name %>;
-        <% when 'double' %>
-          double <%= field.name %>;
-        <% when 'float' %>
-          float <%= field.name %>;
-        <% when /int32|sint32|sfixed32/ %>
-          int32_t <%= field.name %>;
-        <% when /int64|sint64|sfixed64/ %>
-          int64_t <%= field.name %>;
-        <% when /uint32|fixed32/ %>
-          uint32_t <%= field.name %>;
-        <% when /uint64|fixed64/ %>
-          uint64_t <%= field.name %>;
-        <% when 'bool' %>
-          bool <%= field.name %>;
-        <% when 'string' %>
-          struct {
-            char   data[<%= field.meta["size_max"] %>];
-            size_t size;
-          } <%= field.name %>;
-        <% when 'bytes' %>
-          struct {
-            uint8_t data[<%= field.meta["size_max"] %>];
-            size_t  size;
-          } <%= field.name %>;
+      <% if type_message?(field.type) %>
+        <%= namespaced_type field.type %> <%= field.name %>;
+      <% elsif type_enum?(field.type) %>
+        <%= namespaced_type field.type %> <%= field.name %>;
+      <% elsif field.type =~ /double/ %>
+        double <%= field.name %>;
+      <% elsif field.type =~ /float/ %>
+        float <%= field.name %>;
+      <% elsif field.type =~ /int32|sint32|sfixed32/ %>
+        int32_t <%= field.name %>;
+      <% elsif field.type =~ /int64|sint64|sfixed64/ %>
+        int64_t <%= field.name %>;
+      <% elsif field.type =~ /uint32|fixed32/ %>
+        uint32_t <%= field.name %>;
+      <% elsif field.type =~ /uint64|fixed64/ %>
+        uint64_t <%= field.name %>;
+      <% elsif field.type =~ /bool/ %>
+        bool <%= field.name %>;
+      <% elsif field.type =~ /string/ %>
+        struct {
+          char   data[<%= field.meta["size_max"] %>];
+          size_t size;
+        } <%= field.name %>;
+      <% elsif field.type =~ /bytes/ %>
+        struct {
+          uint8_t data[<%= field.meta["size_max"] %>];
+          size_t  size;
+        } <%= field.name %>;
       <% end %>
     <% end %>
   } <%= namespaced_type exp.name %>;

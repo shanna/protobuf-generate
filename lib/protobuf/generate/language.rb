@@ -5,11 +5,11 @@ module Protobuf
     class Language
       module Helpers
         def type_message? type
-          find{|e| e.kind_of?(Protobuf::Generate::Ast::Message) && e.name == type }
+          !!find{|e| e.kind_of?(Protobuf::Generate::Ast::Message) && e.name == type }
         end
 
         def type_enum? type
-          find{|e| e.kind_of?(Protobuf::Generate::Ast::Enum) && e.name.to_s == type.to_s }
+          !!find{|e| e.kind_of?(Protobuf::Generate::Ast::Enum) && e.name.to_s == type.to_s }
         end
       end
 
