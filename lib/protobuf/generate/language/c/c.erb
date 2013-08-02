@@ -30,7 +30,7 @@
           _pb-><%= field.name %>.data = <%= field.options.fetch('default', '""') %>;
           _pb-><%= field.name %>.size = <%= field.options.fetch('default', '').bytesize %>;
         <% else %>
-          _pb-><%= field.name %> = 0;
+          _pb-><%= field.name %> = <%= field.options.fetch('default', 0) %>;
         <% end %>
       <% end %>
     <% end %>
