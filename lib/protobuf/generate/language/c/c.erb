@@ -4,6 +4,190 @@
 #include <stdint.h>
 #include <string.h>
 
+int write_raw_byte(char value, void *_buffer, int offset) {
+  *((char *)_buffer + offset) = value;
+  return ++offset;
+}
+
+int write_raw_little_endian32(uint32_t value, void *_buffer, int offset) {
+  offset = write_raw_byte((char)((value      ) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >>  8) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >> 16) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >> 24) & 0xFF), _buffer, offset);
+  return offset;
+}
+
+int write_raw_little_endian64(uint64_t value, void *_buffer, int offset) {
+  offset = write_raw_byte((char)((value      ) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >>  8) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >> 16) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >> 24) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >> 32) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >> 40) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >> 48) & 0xFF), _buffer, offset);
+  offset = write_raw_byte((char)((value >> 56) & 0xFF), _buffer, offset);
+  return offset;
+}
+
+int write_raw_varint32(uint32_t value, void *_buffer, int offset) {
+  while (1) {
+    if ((value & ~0x7F) == 0) {
+      offset = write_raw_byte((char)value, _buffer, offset);
+      return offset;
+    } else {
+      offset = write_raw_byte((char)((value & 0x7F) | 0x80), _buffer, offset);
+      value  = value >> 7;
+    }
+  }
+  return offset;
+}
+
+int write_raw_varint64(uint64_t value, void *_buffer, int offset) {
+  while (1) {
+    if ((value & ~0x7FL) == 0) {
+      offset = write_raw_byte((char)value, _buffer, offset);
+      return offset;
+    } else {
+      offset = write_raw_byte((char)((value & 0x7F) | 0x80), _buffer, offset);
+      value  = value >> 7;
+    }
+  }
+  return offset;
+}
+
+int write_raw_bytes(char *bytes, int bytes_size, void *_buffer, int offset) {
+  for (int i = 0; i < bytes_size; ++i)
+    offset = write_raw_byte((char)*(bytes + i), _buffer, offset);
+  return offset;
+}
+
+uint32_t encode_zig_zag32(int32_t n) {
+  return (n << 1) ^ (n >> 31);
+}
+
+uint64_t encode_zig_zag64(int64_t n) {
+  return (n << 1) ^ (n >> 63);
+}
+
+int32_t decode_zig_zag32(uint32_t n) {
+  return (n >> 1) ^ -(n & 1);
+}
+
+int64_t decode_zig_zag64(uint64_t n) {
+  return (n >> 1) ^ -(n & 1);
+}
+
+int read_raw_byte(char *tag, void *_buffer, int offset) {
+  *tag = *((char *) _buffer + offset);
+  return ++offset;
+}
+
+int read_raw_little_endian32(uint32_t *tag, void *_buffer, int offset) {
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b1 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b2 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b3 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b4 = (char) *tag;
+
+  *tag = (((uint32_t)b1 & 0xff)      ) |
+         (((uint32_t)b2 & 0xff) <<  8) |
+         (((uint32_t)b3 & 0xff) << 16) |
+         (((uint32_t)b4 & 0xff) << 24);
+  return offset;
+}
+
+int read_raw_little_endian64(uint64_t *tag, void *_buffer, int offset) {
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b1 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b2 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b3 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b4 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b5 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b6 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b7 = (char) *tag;
+  offset = read_raw_byte((char *)tag, _buffer, offset);
+  char b8 = (char) *tag;
+
+  *tag = (((uint64_t)b1 & 0xff)      ) |
+         (((uint64_t)b2 & 0xff) <<  8) |
+         (((uint64_t)b3 & 0xff) << 16) |
+         (((uint64_t)b4 & 0xff) << 24) |
+         (((uint64_t)b5 & 0xff) << 32) |
+         (((uint64_t)b6 & 0xff) << 40) |
+         (((uint64_t)b7 & 0xff) << 48) |
+         (((uint64_t)b8 & 0xff) << 56);
+
+  return offset;
+}
+
+int read_raw_varint32(uint32_t *tag, void *_buffer, int offset) {
+  signed char result;
+
+  offset = read_raw_byte((char *)&result, _buffer, offset);
+  if (result >= 0) {
+    *tag = result;
+    return offset;
+  }
+  *tag = result & 0x7f;
+  offset = read_raw_byte((char *)&result, _buffer, offset);
+  if (result >= 0) {
+    *tag |= result << 7;
+  } else {
+    *tag |= (result & 0x7f) << 7;
+    offset = read_raw_byte((char *)&result, _buffer, offset);
+    if (result >= 0) {
+      *tag |= result << 14;
+    } else {
+      *tag |= (result & 0x7f) << 14;
+      offset = read_raw_byte((char *)&result, _buffer, offset);
+      if (result >= 0) {
+        *tag |= ((uint32_t)result) << 21;
+      } else {
+        *tag |= (((uint32_t)result) & 0x7f) << 21;
+        offset = read_raw_byte((char *)&result, _buffer, offset);
+        *tag |= ((uint32_t)result) << 28;
+        if (result < 0) {
+          /* Discard upper 32 bits. */
+          int i;
+          for (i = 0; i < 5; ++ i) {
+            offset = read_raw_byte((char *)&result, _buffer, offset);
+            if (result >= 0) {
+              return offset;
+            }
+          }
+          /* Invalid state. */
+        }
+      }
+    }
+  }
+  return offset;
+}
+
+int read_raw_varint64(uint64_t *tag, void *_buffer, int offset) {
+  short shift = 0;
+  signed char b;
+  *tag = 0;
+  while (shift < 64) {
+    offset = read_raw_byte((char *)&b, _buffer, offset);
+    *tag |= (uint64_t)(b & 0x7F) << shift;
+    if ((b & 0x80) == 0) {
+      return offset;
+    }
+    shift += 7;
+  }
+  /* return error code. */
+  return -1;
+}
+
 <% each do |exp| %>
   <%
     if exp.kind_of?(Protobuf::Generate::Ast::Package)
@@ -13,7 +197,7 @@
   <% elsif exp.kind_of?(Protobuf::Generate::Ast::Message) %>
 
   void <%= namespaced_function exp.name, 'clear' %>(<%= namespaced_type exp.name %> *_pb) {
-    _memset(_pb, 0, sizeof(*_pb));
+    memset(_pb, 0, sizeof(*_pb));
   }
 
   void <%= namespaced_function exp.name, 'init', 'optional', 'attributes' %>(<%= namespaced_type exp.name %> *_pb) {
