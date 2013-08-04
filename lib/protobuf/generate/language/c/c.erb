@@ -185,9 +185,116 @@
   }
 
   int <%= namespaced_function exp.name, 'write', 'with', 'tag' %>(<%= namespaced_type exp.name %> *_pb, void *_buffer, int offset, int tag) {
-      offset = write_raw_varint32((tag<<3)+0, _buffer, offset);
-      offset = write_raw_varint32(*_pb, _buffer, offset);
+      offset = write_raw_varint32((tag<<3)+2, _buffer, offset);
+      offset = <%= namespaced_function exp.name, 'write', 'delimited', 'to' %>(_pb, _buffer, offset);
       return offset;
+  }
+
+  int <%= namespaced_function exp.name, 'write', 'delimited', 'to' %>(<%= namespaced_type exp.name %> *_pb, void *_buffer, int offset) {
+    int i, shift, new_offset, size;
+
+    new_offset = <%= namespaced_function exp.name, 'write' %>(_pb, _buffer, offset);
+    size       = new_offset - offset;
+    shift      = (size > 127) ? 2 : 1;
+    for (i = new_offset - 1; i >= offset; -- i)
+      *((char *)_buffer + i + shift) = *((char *)_buffer + i);
+
+    write_raw_varint32((uint32_t)size, _buffer, offset);
+    return new_offset + shift;
+  }
+
+  int <%= namespaced_function exp.name, 'read' %>(<%= namespaced_type exp.name %> *_pb, void *_buffer, int offset, int limit) {
+    <%= namespaced_function exp.name, 'clear' %>(_pb);
+    <%= namespaced_function exp.name, 'init', 'optional', 'attributes' %>(_pb);
+
+    uint32_t tag   = 0;
+    while (offset < limit) {
+      offset = read_raw_varint32(&tag, _buffer, offset);
+      tag    = tag>>3;
+      switch (tag) {
+      <% exp.fields.each do |field| %>
+      case <%= field.tag %>:
+          // <%= field.name %>
+        <% if type_message?(field.type) %>
+          offset = <%= namespaced_function field.type, 'read', 'delimited', 'from' %>(&_pb-><%= field.name %>, _buffer, offset);
+        <% elsif type_enum?(field.type) %>
+          offset = read_raw_varint32(&tag, _buffer, offset);
+          _pb-><%= field.name %> = tag;
+        <% elsif field.type =~ /float/ %>
+          offset = read_raw_little_endian32(&tag, _buffer, offset);
+          _pb-><%= field.name %> = *(float *)(&tag);
+        <% elsif field.type =~ /double/ %>
+        {
+          uint64_t value = 0;
+          offset = read_raw_little_endian64(&value, _buffer, offset);
+          _pb-><%= field.name %> = *(double *)(&value);
+        }
+        <% elsif field.type =~ /int32/ %>
+          offset = read_raw_varint32(&tag, _buffer, offset);
+          _pb-><%= field.name %> = (int32_t)tag;
+        <% elsif field.type =~ /int64/ %>
+        {
+          uint64_t value = 0;
+          offset = read_raw_varint64(&value, _buffer, offset);
+          _pb-><%= field.name %> = (int64_t)tag;
+        }
+        <% elsif field.type =~ /sint32/ %>
+          offset = read_raw_varint32(&tag, _buffer, offset);
+          _pb-><%= field.name %> = decode_zig_zag32(tag);
+        <% elsif field.type =~ /sint64/ %>
+        {
+          uint64_t value = 0;
+          offset = read_raw_varint64(&value, _buffer, offset);
+          _pb-><%= field.name %> = decode_zig_zag64(value);
+        }
+        <% elsif field.type =~ /uint32/ %>
+          offset = read_raw_varint32(&tag, _buffer, offset);
+          _pb-><%= field.name %> = tag;
+        <% elsif field.type =~ /uint64/ %>
+        {
+          uint64_t value = 0;
+          offset = read_raw_varint64(&value, _buffer, offset);
+          _pb-><%= field.name %> = value;
+        }
+        <% elsif field.type =~ /fixed32/ %>
+          offset = read_raw_little_endian32(&tag, _buffer, offset);
+          _pb-><%= field.name %> = tag;
+        <% elsif field.type =~ /fixed64/ %>
+        {
+          uint64_t value = 0;
+          offset = read_raw_little_endian32(&value, _buffer, offset);
+          _pb-><%= field.name %> = value;
+        }
+        <% elsif field.type =~ /sfixed32/ %>
+          offset = read_raw_little_endian32(&tag, _buffer, offset);
+          _pb-><%= field.name %> = (int32_t)tag;
+        <% elsif field.type =~ /sfixed64/ %>
+        {
+          uint64_t value = 0;
+          offset = read_raw_little_endian64(&value, _buffer, offset);
+          _pb-><%= field.name %> = (int64_t)value;
+        }
+        <% elsif field.type =~ /bool/ %>
+          offset = read_raw_varint32(&tag, _buffer, offset);
+          _pb-><%= field.name %> = tag & 1;
+        <% elsif field.type =~ /string|bytes/ %>
+          offset = read_raw_varint32(&tag, _buffer, offset);
+          _pb-><%= field.name %>.size = (size_t)tag;
+          for (size_t i = 0; i < (size_t)tag; ++i)
+            offset = read_raw_byte((_pb-><%= field.name %> + i), _buffer, offset);
+        <% end %>
+          break;
+      <% end %>
+      }
+    }
+    return offset;
+  }
+
+  int <%= namespaced_function exp.name, 'read', 'delimited', 'from' %>(<%= namespaced_type exp.name %> *_pb, void *_buffer, int offset) {
+    size_t size;
+    offset = read_raw_varint32(&size, _buffer, offset);
+    <%= namespaced_function exp.name, 'read' %>(_pb, _buffer, size + offset);
+    return offset + size;
   }
 
   int <%= namespaced_function exp.name, 'encode' %>(const <%= namespaced_type exp.name %> *pb, uint8_t *data, size_t data_size, size_t *encoded_size) {
