@@ -1,18 +1,17 @@
 #include TODO:
 
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+
 <% each do |exp| %>
   <%
     if exp.kind_of?(Protobuf::Generate::Ast::Package)
       package exp.name
     elsif exp.kind_of?(Protobuf::Generate::Ast::Enum)
   %>
-  int <%= namespaced_function exp.name, 'write', 'tag', 'with' %>(<%= namespaced_type exp.name %> *_pb, void *_buffer, int offset, int tag) {
-      offset = write_raw_varint32((tag<<3)+0, _buffer, offset);
-      offset = write_raw_varint32(*_pb, _buffer, offset);
-      return offset;
-  }
-
   <% elsif exp.kind_of?(Protobuf::Generate::Ast::Message) %>
+
   void <%= namespaced_function exp.name, 'clear' %>(<%= namespaced_type exp.name %> *_pb) {
     _memset(_pb, 0, sizeof(*_pb));
   }
@@ -21,9 +20,9 @@
     <% exp.fields.each do |field| %>
       <% if field.optional? %>
         <% if type_message?(field.type) %>
-          <%= namespaced_function field.name, 'init', 'optional', 'attributes' %>(&_pb-><%= field.name %>);
+          <%= namespaced_function field.type, 'init', 'optional', 'attributes' %>(&_pb-><%= field.name %>);
         <% elsif type_enum?(field.type) %>
-          // TODO: Optional enum.
+          _pb-><%= field.name %> = <%= namespaced_constant field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>;
         <% elsif field.type =~ /bool/ %>
           _pb-><%= field.name %> = <%= field.options.fetch(:default, 'false') %>;
         <% elsif field.type =~ /string|bytes/ %>
@@ -38,9 +37,160 @@
 
   bool <%= namespaced_function exp.name, 'is', 'default', 'message' %>(<%= namespaced_type exp.name %> _*pb) {
     return true
+    <% exp.fields.each do |field| %>    // <%= field.name %>
+      <% if type_message?(field.type) %>
+        && <%= namespaced_function field.type, 'is', 'default', 'message' %>(&_pb-><%= field.name %>)
+      <% elsif type_enum?(field.type) %>
+        _pb-><%= field.name %> == <%= namespaced_constant field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>
+      <% elsif field.type =~ /string|bytes/ %>
+        && memcmp(&_pb-><%= field.name %>.data, <%= field.options.fetch('default', '""') %>, <%= field.meta.fetch('size_max', field.options.fetch('default', '').bytesize) %>) == 0
+        && _pb-><%= field.name %>.size == <%= field.options.fetch('default', '').bytesize %>
+      <% else %>
+        && _pb-><%= field.name %> == <%= field.options.fetch('default', 0) %>
+      <% end %>
+    <% end %>;
   }
 
-  int <%= namespaced_function exp.name, 'encode' %>(const <%= namespaced_type exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size) {
+  int <%= namespaced_function exp.name, 'write' %>(<%= namespaced_type exp.name %> _*pb, void *_buffer, int offset) {
+    <% exp.fields.each do |field| %>      // <%= field.name %>
+      <% if field.optional? %>
+        <% if type_message?(field.type) %>
+          if (!<%= namespaced_function field.type, 'is', 'default', 'message' %>(&_pb-><%= field.name %>)) {
+            offset = <%= namespaced_function field.type, 'write', 'with', 'tag' %>(&_pb-><%= field.name %>, _buffer, offset, <%= field.tag %>);
+          }
+        <% elsif type_enum?(field.type) %>
+          if (_pb-><%= field.name %> != <%= namespaced_constant field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>) {
+            offset = <%= namespaced_function field.type, 'write', 'with', 'tag' %>(&_pb-><%= field.name %>, _buffer, offset, <%= field.tag %>);
+          }
+        <% elsif field.type =~ /double/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_little_endian64(*(uint64_t *)&_pb-><%= field.name %>, _buffer, offset);
+          }
+        <% elsif field.type =~ /float/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_little_endian32(*(uint32_t *)&_pb-><%= field.name %>, _buffer, offset);
+          }
+        <% elsif field.type =~ /int32/%>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            if (_pb-><%= field.name %> >= 0) offset = write_raw_varin32(_pb-><%= field.name %>, _buffer, offset);
+            else offset = write_raw_varint64(_pb-><%= field.name %>, _buffer, offset);
+          }
+        <% elsif field.type =~ /int64/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_varint64(_pb-><%= field.name %>, _buffer, offset);
+          }
+        <% elsif field.type =~ /sint32/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_varint32(encode_zig_zag32(_pb-><%= field.name %>), _buffer, offset);
+          }
+        <% elsif field.type =~ /sint62/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_varint64(encode_zig_zag64(_pb-><%= field.name %>), _buffer, offset);
+          }
+        <% elsif field.type =~ /uint32/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_varint32(_pb-><%= field.name %>, _buffer, offset);
+          }
+        <% elsif field.type =~ /uint64/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_varint64(_pb-><%= field.name %>, _buffer, offset);
+          }
+        <% elsif field.type =~ /s?fixed32/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_little_endian32(_pb-><%= field.name %>, _buffer, offset);
+          }
+        <% elsif field.type =~ /s?fixed64/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_little_endian64(_pb-><%= field.name %>, _buffer, offset);
+          }
+        <% elsif field.type =~ /bool/ %>
+          if (_pb-><%= field.name %> != <%= field.options.fetch('default', 'false') %>) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_byte(_pb-><%= field.name %>, _buffer, offset);
+          }
+        <% elsif field.type =~ /string/ %>
+          if (memcmp(&_pb-><%= field.name %>.data, <%= field.options.fetch('default', '""') %>, <%= field.meta.fetch('size_max', field.options.fetch('default', '').bytesize) %>) != 0) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_varint32(_pb-><%= field.name %>.size, _buffer, offset);
+            offset = write_raw_bytes(_pb-><%= field.name %>.data, _pb-><%= field.name %>.size, _buffer, offset);
+          }
+        <% elsif field.type =~ /bytes/ %>
+          if (memcmp(&_pb-><%= field.name %>.data, <%= field.options.fetch('default', '""') %>, <%= field.meta.fetch('size_max', field.options.fetch('default', '').bytesize) %>) != 0) {
+            offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+            offset = write_raw_varint32(_pb-><%= field.name %>.size, _buffer, offset);
+            offset = write_raw_bytes(_pb-><%= field.name %>.data, _pb-><%= field.name %>.size, _buffer, offset);
+          }
+        <% end %>
+      <% else %>
+        <% if type_message?(field.type) %>
+          offset = <%= namespaced_function field.type, 'write', 'with', 'tag' %>(&_pb-><%= field.name %>, _buffer, offset, <%= field.tag %>);
+        <% elsif type_enum?(field.type) %>
+          offset = <%= namespaced_function field.type, 'write', 'with', 'tag' %>(&_pb-><%= field.name %>, _buffer, offset, <%= field.tag %>);
+        <% elsif field.type =~ /double/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_little_endian64(*(uint64_t *)&_pb-><%= field.name %>, _buffer, offset);
+        <% elsif field.type =~ /float/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_little_endian32(*(uint32_t *)&_pb-><%= field.name %>, _buffer, offset);
+        <% elsif field.type =~ /int32/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          if (_pb-><%= field.name %> >= 0) offset = write_raw_varin32(_pb-><%= field.name %>, _buffer, offset);
+          else offset = write_raw_varint64(_pb-><%= field.name %>, _buffer, offset);
+        <% elsif field.type =~ /int64/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_varint64(_pb-><%= field.name %>, _buffer, offset);
+        <% elsif field.type =~ /sint32/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_varint32(encode_zig_zag32(_pb-><%= field.name %>), _buffer, offset);
+        <% elsif field.type =~ /sint62/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_varint64(encode_zig_zag64(_pb-><%= field.name %>), _buffer, offset);
+        <% elsif field.type =~ /uint32/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_varint32(_pb-><%= field.name %>, _buffer, offset);
+        <% elsif field.type =~ /uint64/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_varint64(_pb-><%= field.name %>, _buffer, offset);
+        <% elsif field.type =~ /s?fixed32/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_little_endian32(_pb-><%= field.name %>, _buffer, offset);
+        <% elsif field.type =~ /s?fixed64/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_little_endian64(_pb-><%= field.name %>, _buffer, offset);
+        <% elsif field.type =~ /bool/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_byte(_pb-><%= field.name %>, _buffer, offset);
+        <% elsif field.type =~ /string/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_varint32(_pb-><%= field.name %>.size, _buffer, offset);
+          offset = write_raw_bytes(_pb-><%= field.name %>.data, _pb-><%= field.name %>.size, _buffer, offset);
+        <% elsif field.type =~ /bytes/ %>
+          offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
+          offset = write_raw_varint32(_pb-><%= field.name %>.size, _buffer, offset);
+          offset = write_raw_bytes(_pb-><%= field.name %>.data, _pb-><%= field.name %>.size, _buffer, offset);
+        <% end %>
+      <% end %>
+    <% end %>
+    return offset;
+  }
+
+  int <%= namespaced_function exp.name, 'write', 'with', 'tag' %>(<%= namespaced_type exp.name %> *_pb, void *_buffer, int offset, int tag) {
+      offset = write_raw_varint32((tag<<3)+0, _buffer, offset);
+      offset = write_raw_varint32(*_pb, _buffer, offset);
+      return offset;
+  }
+
+  int <%= namespaced_function exp.name, 'encode' %>(const <%= namespaced_type exp.name %> *pb, uint8_t *data, size_t data_size, size_t *encoded_size) {
 
   }
 

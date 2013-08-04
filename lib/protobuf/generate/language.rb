@@ -9,7 +9,16 @@ module Protobuf
         end
 
         def type_enum? type
-          !!find{|e| e.kind_of?(Protobuf::Generate::Ast::Enum) && e.name.to_s == type.to_s }
+          !!find{|e| e.kind_of?(Protobuf::Generate::Ast::Enum) && e.name == type }
+        end
+
+        def type_wire type
+          Hash[*%w{int32 0 int64 0 sint32 0 sint64 0 uint32 0 uint64 0 string 2 bool 0 float 5 double 1 fixed32 5 fixed64 1 sfixed32 5 sfixed64 1 bytes 2}][type]
+        end
+
+        def type_enum_default type, default
+          enum = find{|e| e.kind_of?(Protobuf::Generate::Ast::Enum) && e.name == type} # TODO: Or raise unknown type.
+          (enum.fields.find{|f| f.name == default.to_s} || enum.fields.first).name
         end
       end
 
