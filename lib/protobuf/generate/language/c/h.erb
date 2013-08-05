@@ -1,7 +1,8 @@
 #pragma once
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
   extern "C" {
@@ -58,7 +59,7 @@
 
   // TODO: Replace int with an protobuf_(encode|decode)_t type.
   // TODO: Move encode_size into result type.
-  int <%= namespaced_function exp.name, 'encode' %>(const <%= namespaced_type exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
+  int <%= namespaced_function exp.name, 'encode' %>(const <%= namespaced_type exp.name %> *pb, uint8_t *data, size_t data_size, size_t *encoded_size);
   int <%= namespaced_function exp.name, 'decode' %>(<%= namespaced_type exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
 <%
     end
