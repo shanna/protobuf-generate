@@ -17,9 +17,7 @@ begin
   proto = ARGV[1]
   tree  = Protobuf::Generate::Parser.new.parse(File.read(proto))
   ast   = Protobuf::Generate::Transform.new.apply(tree)
-  require 'pp'
-  pp ast
-  gen = generator.new(ast)
+  gen   = generator.new(ast)
 
   # TODO: Think about how best to have generator deal with multiple templates. e.g. *.c and *.h
   gen.templates.each do |template|
