@@ -14,12 +14,25 @@ unless generator = Protobuf::Generate::Language.find(ARGV[0])
 end
 
 begin
-  ast = Protobuf::Generate::Parser.new.parse(File.read(ARGV[1]))
+  proto = ARGV[1]
+  tree  = Protobuf::Generate::Parser.new.parse(File.read(proto))
+  ast   = Protobuf::Generate::Transform.new.apply(tree)
+  require 'pp'
+  pp ast
   gen = generator.new(ast)
 
   # TODO: Think about how best to have generator deal with multiple templates. e.g. *.c and *.h
   gen.templates.each do |template|
-    puts gen.generate(template)
+    # TODO: Each language should take care of file naming conventions as well.
+    postfix  = File.basename(template).gsub(/\.erb$/, '') # c.erb, h.erb, demo.c.erb becomes .c, .h, demo.c
+    package  = ast.find{|e| e.kind_of?(Protobuf::Generate::Ast::Package)}
+    package  = package ? package.name : File.basename(proto).gsub(/\.proto$/)
+    package  = package.gsub('.', '_').gsub(/([^A-Z_])([A-Z]+)/, '\1_\2').gsub(/_+/, '_').downcase
+    filename = File.join(File.dirname(proto), [package, postfix].join('.'))
+
+    File.open(filename, File::CREAT | File::TRUNC | File::WRONLY) do |fh|
+     fh.puts gen.generate(template, filename)
+    end
   end
 rescue Parslet::ParseFailed => error
   puts error.cause.ascii_tree

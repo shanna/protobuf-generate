@@ -4,6 +4,8 @@ module Protobuf
   module Generate
     class Language
       module Helpers
+        attr_accessor :template, :filename
+
         def type_message? type
           !!find{|e| e.kind_of?(Protobuf::Generate::Ast::Message) && e.name == type }
         end
@@ -40,6 +42,8 @@ module Protobuf
         (@@languages ||= []) << klass
       end
 
+      #--
+      # TODO: AST tree should include name of .proto that generated it.
       def initialize ast
         @ast = ast
       end
@@ -48,10 +52,12 @@ module Protobuf
         self.class.templates
       end
 
-      def generate eruby_filename
+      def generate template, filename
         ast = @ast
         ast.extend(Helpers)
-        Erubis::Eruby.new(File.read(eruby_filename), filename: eruby_filename).evaluate(ast)
+        ast.template = template
+        ast.filename = filename
+        Erubis::Eruby.new(File.read(template), filename: template).evaluate(ast)
       end
     end # Language
   end # Generate
