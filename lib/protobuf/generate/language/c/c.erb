@@ -245,8 +245,8 @@ int read_raw_varint64(uint64_t *tag, void *_buffer, int offset) {
           }
         <% elsif type_enum?(field.type) %>
           if (pb-><%= field.name %> != <%= namespaced_constant field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>) {
-            // TODO: Write enum.
-            // offset = <%= namespaced_function field.type, 'write', 'with', 'tag' %>(&pb-><%= field.name %>, _buffer, offset, <%= field.tag %>);
+            offset = write_raw_varint32((<%= field.tag %><<3)+0, _buffer, offset);
+            offset = write_raw_varint32(pb-><%= field.name %>, _buffer, offset);
           }
         <% elsif field.type =~ /double/ %>
           if (pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
@@ -321,7 +321,8 @@ int read_raw_varint64(uint64_t *tag, void *_buffer, int offset) {
         <% if type_message?(field.type) %>
           offset = <%= namespaced_function field.type, 'write', 'with', 'tag' %>(&pb-><%= field.name %>, _buffer, offset, <%= field.tag %>);
         <% elsif type_enum?(field.type) %>
-          offset = <%= namespaced_function field.type, 'write', 'with', 'tag' %>(&pb-><%= field.name %>, _buffer, offset, <%= field.tag %>);
+          offset = write_raw_varint32((<%= field.tag %><<3)+0, _buffer, offset);
+          offset = write_raw_varint32(pb-><%= field.name %>, _buffer, offset);
         <% elsif field.type =~ /double/ %>
           offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, _buffer, offset);
           offset = write_raw_little_endian64(*(uint64_t *)&pb-><%= field.name %>, _buffer, offset);
