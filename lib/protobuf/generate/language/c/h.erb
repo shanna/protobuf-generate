@@ -45,8 +45,8 @@
         bool <%= field.name %>;
       <% elsif field.type =~ /string/ %>
         struct {
-          char   data[<%= field.meta["size_max"] %>];
-          size_t size;
+          uint8_t data[<%= field.meta["size_max"] %>];
+          size_t  size;
         } <%= field.name %>;
       <% elsif field.type =~ /bytes/ %>
         struct {
