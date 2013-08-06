@@ -489,7 +489,7 @@ int read_raw_varint64(uint64_t *tag, void *_buffer, int offset) {
   }
 
   int <%= namespaced_function exp.name, 'decode' %>(<%= namespaced_type exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size) {
-    *encoded_size = <%= namespaced_function exp.name, 'read', 'delimited', 'from' %>(pb, (void *)data, 0);
+    *encoded_size = <%= namespaced_function exp.name, 'read' %>(pb, (void *)data, 0, data_size);
     return 0; // TODO: Decoding errors.
   }
   <% end %>
