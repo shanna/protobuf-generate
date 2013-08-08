@@ -4,12 +4,12 @@
 #include <stdint.h>
 #include <string.h>
 
-int write_raw_byte(uint8_t value, uint8_t *buffer, int offset) {
+static int write_raw_byte(uint8_t value, uint8_t *buffer, int offset) {
   *(buffer + offset) = value;
   return ++offset;
 }
 
-int write_raw_little_endian32(uint32_t value, uint8_t *buffer, int offset) {
+static int write_raw_little_endian32(uint32_t value, uint8_t *buffer, int offset) {
   offset = write_raw_byte((uint8_t)((value      ) & 0xFF), buffer, offset);
   offset = write_raw_byte((uint8_t)((value >>  8) & 0xFF), buffer, offset);
   offset = write_raw_byte((uint8_t)((value >> 16) & 0xFF), buffer, offset);
@@ -17,7 +17,7 @@ int write_raw_little_endian32(uint32_t value, uint8_t *buffer, int offset) {
   return offset;
 }
 
-int write_raw_little_endian64(uint64_t value, uint8_t *buffer, int offset) {
+static int write_raw_little_endian64(uint64_t value, uint8_t *buffer, int offset) {
   offset = write_raw_byte((uint8_t)((value      ) & 0xFF), buffer, offset);
   offset = write_raw_byte((uint8_t)((value >>  8) & 0xFF), buffer, offset);
   offset = write_raw_byte((uint8_t)((value >> 16) & 0xFF), buffer, offset);
@@ -29,7 +29,7 @@ int write_raw_little_endian64(uint64_t value, uint8_t *buffer, int offset) {
   return offset;
 }
 
-int write_raw_varint32(uint32_t value, uint8_t *buffer, int offset) {
+static int write_raw_varint32(uint32_t value, uint8_t *buffer, int offset) {
   while (1) {
     if ((value & ~0x7F) == 0) {
       offset = write_raw_byte((uint8_t)value, buffer, offset);
@@ -42,7 +42,7 @@ int write_raw_varint32(uint32_t value, uint8_t *buffer, int offset) {
   return offset;
 }
 
-int write_raw_varint64(uint64_t value, uint8_t *buffer, int offset) {
+static int write_raw_varint64(uint64_t value, uint8_t *buffer, int offset) {
   while (1) {
     if ((value & ~0x7FL) == 0) {
       offset = write_raw_byte((uint8_t)value, buffer, offset);
@@ -55,34 +55,34 @@ int write_raw_varint64(uint64_t value, uint8_t *buffer, int offset) {
   return offset;
 }
 
-int write_raw_bytes(uint8_t *bytes, int bytes_size, uint8_t *buffer, int offset) {
+static int write_raw_bytes(uint8_t *bytes, int bytes_size, uint8_t *buffer, int offset) {
   for (int i = 0; i < bytes_size; ++i)
     offset = write_raw_byte(*(bytes + i), buffer, offset);
   return offset;
 }
 
-uint32_t encode_zig_zag32(int32_t n) {
+static uint32_t encode_zig_zag32(int32_t n) {
   return (n << 1) ^ (n >> 31);
 }
 
-uint64_t encode_zig_zag64(int64_t n) {
+static uint64_t encode_zig_zag64(int64_t n) {
   return (n << 1) ^ (n >> 63);
 }
 
-int32_t decode_zig_zag32(uint32_t n) {
+static int32_t decode_zig_zag32(uint32_t n) {
   return (n >> 1) ^ -(n & 1);
 }
 
-int64_t decode_zig_zag64(uint64_t n) {
+static int64_t decode_zig_zag64(uint64_t n) {
   return (n >> 1) ^ -(n & 1);
 }
 
-int read_raw_byte(uint8_t *tag, const uint8_t *buffer, int offset) {
+static int read_raw_byte(uint8_t *tag, const uint8_t *buffer, int offset) {
   *tag = *(buffer + offset);
   return ++offset;
 }
 
-int read_raw_little_endian32(uint32_t *tag, const uint8_t *buffer, int offset) {
+static int read_raw_little_endian32(uint32_t *tag, const uint8_t *buffer, int offset) {
   offset = read_raw_byte((uint8_t *)tag, buffer, offset);
   uint8_t b1 = (uint8_t)*tag;
   offset = read_raw_byte((uint8_t *)tag, buffer, offset);
@@ -99,7 +99,7 @@ int read_raw_little_endian32(uint32_t *tag, const uint8_t *buffer, int offset) {
   return offset;
 }
 
-int read_raw_little_endian64(uint64_t *tag, const uint8_t *buffer, int offset) {
+static int read_raw_little_endian64(uint64_t *tag, const uint8_t *buffer, int offset) {
   offset = read_raw_byte((uint8_t *)tag, buffer, offset);
   uint8_t b1 = (uint8_t)*tag;
   offset = read_raw_byte((uint8_t *)tag, buffer, offset);
@@ -129,7 +129,7 @@ int read_raw_little_endian64(uint64_t *tag, const uint8_t *buffer, int offset) {
   return offset;
 }
 
-int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset) {
+static int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset) {
   uint8_t result;
 
   offset = read_raw_byte(&result, buffer, offset);
@@ -172,7 +172,7 @@ int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset) {
   return offset;
 }
 
-int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
+static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
   short shift = 0;
   uint8_t b;
   *tag = 0;
