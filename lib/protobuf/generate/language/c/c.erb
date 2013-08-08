@@ -77,7 +77,7 @@ static inline int64_t decode_zig_zag64(uint64_t n) {
   return (n >> 1) ^ -(n & 1);
 }
 
-static int read_raw_byte(uint8_t *tag, const uint8_t *buffer, int offset) {
+static inline int read_raw_byte(uint8_t *tag, const uint8_t *buffer, int offset) {
   *tag = *(buffer + offset);
   return ++offset;
 }
