@@ -6,6 +6,7 @@
 gems/
 tmp/
 *.gem
+.bundle
 
 bin/*
 !bin/protobuf-generate
