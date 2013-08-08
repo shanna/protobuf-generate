@@ -61,19 +61,19 @@ static int write_raw_bytes(uint8_t *bytes, int bytes_size, uint8_t *buffer, int 
   return offset;
 }
 
-static uint32_t encode_zig_zag32(int32_t n) {
+static inline uint32_t encode_zig_zag32(int32_t n) {
   return (n << 1) ^ (n >> 31);
 }
 
-static uint64_t encode_zig_zag64(int64_t n) {
+static inline uint64_t encode_zig_zag64(int64_t n) {
   return (n << 1) ^ (n >> 63);
 }
 
-static int32_t decode_zig_zag32(uint32_t n) {
+static inline int32_t decode_zig_zag32(uint32_t n) {
   return (n >> 1) ^ -(n & 1);
 }
 
-static int64_t decode_zig_zag64(uint64_t n) {
+static inline int64_t decode_zig_zag64(uint64_t n) {
   return (n >> 1) ^ -(n & 1);
 }
 
