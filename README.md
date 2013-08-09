@@ -8,7 +8,7 @@ A multi-language concrete protobuf code generator in Ruby.
 
 ## Synopsis
 
-A simple PEG grammar, AST and template based approach to code generation.
+A simple PEG parser, AST and template based approach to code generation.
 
 [protobuf-embedded-c](https://code.google.com/p/protobuf-embedded-c/) uses the same approach but requires a page of
 rage inducing instructions to install obsolete Eclipse plugins and Java bullshit if you want to be able to develop
