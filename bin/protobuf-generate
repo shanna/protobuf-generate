@@ -4,7 +4,13 @@ require 'protobuf-generate'
 
 # Usage.
 unless ARGV.size == 2
-  puts DATA.read
+  puts %q{
+Generate native code from protobuf files.
+
+usage: protobuf-generate <language> <proto>
+  language - Native language to generate.
+  proto    - The protobuf file to generate from.
+  }
   exit 0
 end
 
@@ -36,10 +42,3 @@ rescue Parslet::ParseFailed => error
   puts error.cause.ascii_tree
 end
 
-__END__
-
-Generate native code from protobuf files.
-
-usage: protobuf-generate <language> <proto>
-  language - Native language to generate.
-  proto    - The protobuf file to generate from.
