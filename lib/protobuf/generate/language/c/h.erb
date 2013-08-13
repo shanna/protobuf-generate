@@ -12,10 +12,14 @@
 // Remove. Have parser count type usage and only include the code if required.
 int write_raw_little_endian32(uint32_t value, uint8_t *buffer, int offset);
 int write_raw_little_endian64(uint64_t value, uint8_t *buffer, int offset);
+int write_raw_float(float value, uint8_t *buffer, int offset);
+int write_raw_double(double value, uint8_t *buffer, int offset);
 int write_raw_varint32(uint32_t value, uint8_t *buffer, int offset);
 int write_raw_varint64(uint64_t value, uint8_t *buffer, int offset);
 int read_raw_little_endian32(uint32_t *tag, const uint8_t *buffer, int offset);
 int read_raw_little_endian64(uint64_t *tag, const uint8_t *buffer, int offset);
+int read_raw_float(float *tag, const uint8_t *buffer, int offset);
+int read_raw_double(double *tag, const uint8_t *buffer, int offset);
 int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset);
 int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset);
 
