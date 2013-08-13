@@ -9,7 +9,7 @@ static int write_raw_byte(uint8_t value, uint8_t *buffer, int offset) {
   return ++offset;
 }
 
-static int write_raw_little_endian32(uint32_t value, uint8_t *buffer, int offset) {
+int write_raw_little_endian32(uint32_t value, uint8_t *buffer, int offset) {
   offset = write_raw_byte((uint8_t)((value      ) & 0xFF), buffer, offset);
   offset = write_raw_byte((uint8_t)((value >>  8) & 0xFF), buffer, offset);
   offset = write_raw_byte((uint8_t)((value >> 16) & 0xFF), buffer, offset);
@@ -17,7 +17,7 @@ static int write_raw_little_endian32(uint32_t value, uint8_t *buffer, int offset
   return offset;
 }
 
-static int write_raw_little_endian64(uint64_t value, uint8_t *buffer, int offset) {
+int write_raw_little_endian64(uint64_t value, uint8_t *buffer, int offset) {
   offset = write_raw_byte((uint8_t)((value      ) & 0xFF), buffer, offset);
   offset = write_raw_byte((uint8_t)((value >>  8) & 0xFF), buffer, offset);
   offset = write_raw_byte((uint8_t)((value >> 16) & 0xFF), buffer, offset);
@@ -29,7 +29,7 @@ static int write_raw_little_endian64(uint64_t value, uint8_t *buffer, int offset
   return offset;
 }
 
-static int write_raw_varint32(uint32_t value, uint8_t *buffer, int offset) {
+int write_raw_varint32(uint32_t value, uint8_t *buffer, int offset) {
   while (1) {
     if ((value & ~0x7F) == 0) {
       offset = write_raw_byte((uint8_t)value, buffer, offset);
@@ -42,7 +42,7 @@ static int write_raw_varint32(uint32_t value, uint8_t *buffer, int offset) {
   return offset;
 }
 
-static int write_raw_varint64(uint64_t value, uint8_t *buffer, int offset) {
+int write_raw_varint64(uint64_t value, uint8_t *buffer, int offset) {
   while (1) {
     if ((value & ~0x7FL) == 0) {
       offset = write_raw_byte((uint8_t)value, buffer, offset);
@@ -82,7 +82,7 @@ static inline int read_raw_byte(uint8_t *tag, const uint8_t *buffer, int offset)
   return ++offset;
 }
 
-static int read_raw_little_endian32(uint32_t *tag, const uint8_t *buffer, int offset) {
+int read_raw_little_endian32(uint32_t *tag, const uint8_t *buffer, int offset) {
   offset = read_raw_byte((uint8_t *)tag, buffer, offset);
   uint8_t b1 = (uint8_t)*tag;
   offset = read_raw_byte((uint8_t *)tag, buffer, offset);
@@ -99,7 +99,7 @@ static int read_raw_little_endian32(uint32_t *tag, const uint8_t *buffer, int of
   return offset;
 }
 
-static int read_raw_little_endian64(uint64_t *tag, const uint8_t *buffer, int offset) {
+int read_raw_little_endian64(uint64_t *tag, const uint8_t *buffer, int offset) {
   offset = read_raw_byte((uint8_t *)tag, buffer, offset);
   uint8_t b1 = (uint8_t)*tag;
   offset = read_raw_byte((uint8_t *)tag, buffer, offset);
@@ -129,7 +129,7 @@ static int read_raw_little_endian64(uint64_t *tag, const uint8_t *buffer, int of
   return offset;
 }
 
-static int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset) {
+int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset) {
   uint8_t result;
 
   offset = read_raw_byte(&result, buffer, offset);
@@ -172,7 +172,7 @@ static int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset) {
   return offset;
 }
 
-static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
+int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset) {
   short shift = 0;
   uint8_t b;
   *tag = 0;
@@ -189,24 +189,19 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
 }
 
 <% each do |exp| %>
-  <%
-    if exp.kind_of?(Protobuf::Generate::Ast::Package)
-      package exp.name
-    elsif exp.kind_of?(Protobuf::Generate::Ast::Enum)
-  %>
-  <% elsif exp.kind_of?(Protobuf::Generate::Ast::Message) %>
+  <% if exp.kind_of?(Protobuf::Generate::Ast::Message) %>
 
-  void <%= namespaced_function exp.name, 'clear' %>(<%= namespaced_type exp.name %> *pb) {
+  void <%= function exp.package, exp.name, 'clear' %>(<%= type exp.package, exp.name %> *pb) {
     memset(pb, 0, sizeof(*pb));
   }
 
-  void <%= namespaced_function exp.name, 'init', 'optional', 'attributes' %>(<%= namespaced_type exp.name %> *pb) {
+  void <%= function exp.package, exp.name, 'init', 'optional', 'attributes' %>(<%= type exp.package, exp.name %> *pb) {
     <% exp.fields.each do |field| %>
       <% if field.optional? %>
         <% if type_message?(field.type) %>
-          <%= namespaced_function field.type, 'init', 'optional', 'attributes' %>(&pb-><%= field.name %>);
+          <%= function exp.package, field.type, 'init', 'optional', 'attributes' %>(&pb-><%= field.name %>);
         <% elsif type_enum?(field.type) %>
-          pb-><%= field.name %> = <%= namespaced_constant field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>;
+          pb-><%= field.name %> = <%= constant exp.package, field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>;
         <% elsif field.type =~ /bool/ %>
           pb-><%= field.name %> = <%= field.options.fetch(:default, 'false') %>;
         <% elsif field.type =~ /string/ %>
@@ -223,13 +218,13 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
     return;
   }
 
-  bool <%= namespaced_function exp.name, 'is', 'default', 'message' %>(const <%= namespaced_type exp.name %> *pb) {
+  bool <%= function exp.package, exp.name, 'is', 'default', 'message' %>(const <%= type exp.package, exp.name %> *pb) {
     return true
     <% exp.fields.each do |field| %>    // <%= field.name %>
       <% if type_message?(field.type) %>
-        && <%= namespaced_function field.type, 'is', 'default', 'message' %>(&pb-><%= field.name %>)
+        && <%= function exp.package, field.type, 'is', 'default', 'message' %>(&pb-><%= field.name %>)
       <% elsif type_enum?(field.type) %>
-        && pb-><%= field.name %> == <%= namespaced_constant field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>
+        && pb-><%= field.name %> == <%= constant exp.package, field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>
       <% elsif field.type =~ /string|bytes/ %>
         && memcmp(&pb-><%= field.name %>.data, <%= field.options.fetch('default', '""') %>, <%= field.meta.fetch('size_max', field.options.fetch('default', '').bytesize) %>) == 0
         && pb-><%= field.name %>.size == <%= field.options.fetch('default', '').bytesize %>
@@ -239,15 +234,15 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
     <% end %>;
   }
 
-  int <%= namespaced_function exp.name, 'write' %>(const <%= namespaced_type exp.name %> *pb, uint8_t *buffer, int offset) {
+  int <%= function exp.package, exp.name, 'write' %>(const <%= type exp.package, exp.name %> *pb, uint8_t *buffer, int offset) {
     <% exp.fields.each do |field| %>      // <%= field.name %>
       <% if field.optional? %>
         <% if type_message?(field.type) %>
-          if (!<%= namespaced_function field.type, 'is', 'default', 'message' %>(&pb-><%= field.name %>)) {
-            offset = <%= namespaced_function field.type, 'write', 'with', 'tag' %>(&pb-><%= field.name %>, buffer, offset, <%= field.tag %>);
+          if (!<%= function exp.package, field.type, 'is', 'default', 'message' %>(&pb-><%= field.name %>)) {
+            offset = <%= function exp.package, field.type, 'write', 'with', 'tag' %>(&pb-><%= field.name %>, buffer, offset, <%= field.tag %>);
           }
         <% elsif type_enum?(field.type) %>
-          if (pb-><%= field.name %> != <%= namespaced_constant field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>) {
+          if (pb-><%= field.name %> != <%= constant exp.package, field.type, type_enum_default(field.type, field.options.fetch('default', nil)) %>) {
             offset = write_raw_varint32((<%= field.tag %><<3)+0, buffer, offset);
             offset = write_raw_varint32(pb-><%= field.name %>, buffer, offset);
           }
@@ -264,7 +259,7 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
         <% elsif field.type =~ /int32/%>
           if (pb-><%= field.name %> != <%= field.options.fetch('default', 0) %>) {
             offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, buffer, offset);
-            if (pb-><%= field.name %> >= 0) offset = write_raw_varin32(pb-><%= field.name %>, buffer, offset);
+            if (pb-><%= field.name %> >= 0) offset = write_raw_varint32(pb-><%= field.name %>, buffer, offset);
             else offset = write_raw_varint64(pb-><%= field.name %>, buffer, offset);
           }
         <% elsif field.type =~ /int64/ %>
@@ -322,7 +317,7 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
         <% end %>
       <% else %>
         <% if type_message?(field.type) %>
-          offset = <%= namespaced_function field.type, 'write', 'with', 'tag' %>(&pb-><%= field.name %>, buffer, offset, <%= field.tag %>);
+          offset = <%= function exp.package, field.type, 'write', 'with', 'tag' %>(&pb-><%= field.name %>, buffer, offset, <%= field.tag %>);
         <% elsif type_enum?(field.type) %>
           offset = write_raw_varint32((<%= field.tag %><<3)+0, buffer, offset);
           offset = write_raw_varint32(pb-><%= field.name %>, buffer, offset);
@@ -334,7 +329,7 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
           offset = write_raw_little_endian32(*(uint32_t *)&pb-><%= field.name %>, buffer, offset);
         <% elsif field.type =~ /int32/ %>
           offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, buffer, offset);
-          if (pb-><%= field.name %> >= 0) offset = write_raw_varin32(pb-><%= field.name %>, buffer, offset);
+          if (pb-><%= field.name %> >= 0) offset = write_raw_varint32(pb-><%= field.name %>, buffer, offset);
           else offset = write_raw_varint64(pb-><%= field.name %>, buffer, offset);
         <% elsif field.type =~ /int64/ %>
           offset = write_raw_varint32((<%= field.tag %><<3)+<%= type_wire field.type %>, buffer, offset);
@@ -374,10 +369,10 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
     return offset;
   }
 
-  int <%= namespaced_function exp.name, 'write', 'delimited', 'to' %>(const <%= namespaced_type exp.name %> *pb, uint8_t *buffer, int offset) {
+  int <%= function exp.package, exp.name, 'write', 'delimited', 'to' %>(const <%= type exp.package, exp.name %> *pb, uint8_t *buffer, int offset) {
     int i, shift, new_offset, size;
 
-    new_offset = <%= namespaced_function exp.name, 'write' %>(pb, buffer, offset);
+    new_offset = <%= function exp.package, exp.name, 'write' %>(pb, buffer, offset);
     size       = new_offset - offset;
     shift      = (size > 127) ? 2 : 1;
     for (i = new_offset - 1; i >= offset; -- i)
@@ -387,22 +382,22 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
     return new_offset + shift;
   }
 
-  int <%= namespaced_function exp.name, 'write', 'with', 'tag' %>(const <%= namespaced_type exp.name %> *pb, uint8_t *buffer, int offset, int tag) {
+  int <%= function exp.package, exp.name, 'write', 'with', 'tag' %>(const <%= type exp.package, exp.name %> *pb, uint8_t *buffer, int offset, int tag) {
       offset = write_raw_varint32((tag<<3)+2, buffer, offset);
-      offset = <%= namespaced_function exp.name, 'write', 'delimited', 'to' %>(pb, buffer, offset);
+      offset = <%= function exp.package, exp.name, 'write', 'delimited', 'to' %>(pb, buffer, offset);
       return offset;
   }
 
-  int <%= namespaced_function exp.name, 'encode' %>(const <%= namespaced_type exp.name %> *pb, uint8_t *data, size_t data_size, size_t *encoded_size) {
-    *encoded_size = <%= namespaced_function exp.name, 'write', 'delimited', 'to' %>(pb, data, -1);
+  int <%= function exp.package, exp.name, 'encode' %>(const <%= type exp.package, exp.name %> *pb, uint8_t *data, size_t data_size, size_t *encoded_size) {
+    *encoded_size = <%= function exp.package, exp.name, 'write', 'delimited', 'to' %>(pb, data, -1);
     return 0; // TODO: Encoding errors.
   }
 
-  int <%= namespaced_function exp.name, 'read', 'delimited', 'from' %>(<%= namespaced_type exp.name %> *pb, const uint8_t *buffer, int offset);
+  int <%= function exp.package, exp.name, 'read', 'delimited', 'from' %>(<%= type exp.package, exp.name %> *pb, const uint8_t *buffer, int offset);
 
-  int <%= namespaced_function exp.name, 'read' %>(<%= namespaced_type exp.name %> *pb, const uint8_t *buffer, int offset, int limit) {
-    <%= namespaced_function exp.name, 'clear' %>(pb);
-    <%= namespaced_function exp.name, 'init', 'optional', 'attributes' %>(pb);
+  int <%= function exp.package, exp.name, 'read' %>(<%= type exp.package, exp.name %> *pb, const uint8_t *buffer, int offset, int limit) {
+    <%= function exp.package, exp.name, 'clear' %>(pb);
+    <%= function exp.package, exp.name, 'init', 'optional', 'attributes' %>(pb);
 
     uint32_t tag   = 0;
     while (offset < limit) {
@@ -413,7 +408,7 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
       case <%= field.tag %>:
           // <%= field.name %>
         <% if type_message?(field.type) %>
-          offset = <%= namespaced_function field.type, 'read', 'delimited', 'from' %>(&pb-><%= field.name %>, buffer, offset);
+          offset = <%= function exp.package, field.type, 'read', 'delimited', 'from' %>(&pb-><%= field.name %>, buffer, offset);
         <% elsif type_enum?(field.type) %>
           offset = read_raw_varint32(&tag, buffer, offset);
           pb-><%= field.name %> = tag;
@@ -487,15 +482,15 @@ static int read_raw_varint64(uint64_t *tag, uint8_t *buffer, int offset) {
     return offset;
   }
 
-  int <%= namespaced_function exp.name, 'read', 'delimited', 'from' %>(<%= namespaced_type exp.name %> *pb, const uint8_t *buffer, int offset) {
+  int <%= function exp.package, exp.name, 'read', 'delimited', 'from' %>(<%= type exp.package, exp.name %> *pb, const uint8_t *buffer, int offset) {
     uint32_t size;
     offset = read_raw_varint32(&size, buffer, offset);
-    <%= namespaced_function exp.name, 'read' %>(pb, buffer, offset, size + offset);
+    <%= function exp.package, exp.name, 'read' %>(pb, buffer, offset, size + offset);
     return offset + size;
   }
 
-  int <%= namespaced_function exp.name, 'decode' %>(<%= namespaced_type exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size) {
-    *encoded_size = <%= namespaced_function exp.name, 'read' %>(pb, data, 0, data_size);
+  int <%= function exp.package, exp.name, 'decode' %>(<%= type exp.package, exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size) {
+    *encoded_size = <%= function exp.package, exp.name, 'read' %>(pb, data, 0, data_size);
     return 0; // TODO: Decoding errors.
   }
   <% end %>

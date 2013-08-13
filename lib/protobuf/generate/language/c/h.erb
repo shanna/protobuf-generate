@@ -7,28 +7,34 @@
 #ifdef __cplusplus
   extern "C" {
 #endif
-<%
-  each do |exp|
-    if exp.kind_of?(Protobuf::Generate::Ast::Package)
-      package exp.name
-    elsif exp.kind_of?(Protobuf::Generate::Ast::Enum)
-%>
+
+// TODO: Export to avoid unused function errors with -Werror.
+// Remove. Have parser count type usage and only include the code if required.
+int write_raw_little_endian32(uint32_t value, uint8_t *buffer, int offset);
+int write_raw_little_endian64(uint64_t value, uint8_t *buffer, int offset);
+int write_raw_varint32(uint32_t value, uint8_t *buffer, int offset);
+int write_raw_varint64(uint64_t value, uint8_t *buffer, int offset);
+int read_raw_little_endian32(uint32_t *tag, const uint8_t *buffer, int offset);
+int read_raw_little_endian64(uint64_t *tag, const uint8_t *buffer, int offset);
+int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset);
+int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset);
+
+<% each do |exp| %>
+  <% if exp.kind_of?(Protobuf::Generate::Ast::Enum) %>
 
   typedef enum {
     <% exp.fields.each do |field| %>
-      <%= namespaced_constant exp.name, field.name %> = <%= field.tag %>,
+      <%= constant exp.package, exp.name, field.name %> = <%= field.tag %>,
     <% end %>
-  } <%= namespaced_type exp.name %>;
-<%
-    elsif exp.kind_of?(Protobuf::Generate::Ast::Message)
-%>
+  } <%= type exp.package, exp.name %>;
+  <% elsif exp.kind_of?(Protobuf::Generate::Ast::Message) %>
 
-  typedef struct <%= namespaced_type exp.name %> {
+  typedef struct <%= type exp.package, exp.name %> {
     <% exp.fields.each do |field| %>
       <% if type_message?(field.type) %>
-        <%= namespaced_type field.type %> <%= field.name %>;
+        <%= type exp.package, field.type %> <%= field.name %>;
       <% elsif type_enum?(field.type) %>
-        <%= namespaced_type field.type %> <%= field.name %>;
+        <%= type exp.package, field.type %> <%= field.name %>;
       <% elsif field.type =~ /double/ %>
         double <%= field.name %>;
       <% elsif field.type =~ /float/ %>
@@ -55,16 +61,14 @@
         } <%= field.name %>;
       <% end %>
     <% end %>
-  } <%= namespaced_type exp.name %>;
+  } <%= type exp.package, exp.name %>;
 
   // TODO: Replace int with an protobuf_(encode|decode)_t type.
   // TODO: Move encode_size into result type.
-  int <%= namespaced_function exp.name, 'encode' %>(const <%= namespaced_type exp.name %> *pb, uint8_t *data, size_t data_size, size_t *encoded_size);
-  int <%= namespaced_function exp.name, 'decode' %>(<%= namespaced_type exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
-<%
-    end
-  end
-%>
+  int <%= function exp.package, exp.name, 'encode' %>(const <%= type exp.package, exp.name %> *pb, uint8_t *data, size_t data_size, size_t *encoded_size);
+  int <%= function exp.package, exp.name, 'decode' %>(<%= type exp.package, exp.name %> *pb, const uint8_t *data, size_t data_size, size_t *encoded_size);
+  <% end %>
+<% end %>
 
 #ifdef __cplusplus
   }

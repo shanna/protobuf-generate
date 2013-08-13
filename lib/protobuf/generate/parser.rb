@@ -51,19 +51,33 @@ module Protobuf
     end # Parser
 
     class Ast
-      class Package < Struct.new(:name); end
-      class Message < Struct.new(:name, :meta, :fields)
+      class Package < Struct.new(:name)
+        def to_s; name end
+      end
+      class Message < Struct.new(:package, :name, :meta, :fields)
+        def to_s; name end
         def empty?; fields.nil? or fields.empty? end
       end
       class MessageField < Struct.new(:label, :type, :name, :tag, :meta, :options)
         def required?; !!label.match(/required/) end
         def optional?; !required? end
       end
-      class Enum < Struct.new(:name, :fields); end
+      class Enum < Struct.new(:package, :name, :fields)
+        def to_s; name end
+      end
       class EnumField < Struct.new(:name, :tag); end
     end
 
     class Transform < Parslet::Transform
+      def apply slice, *args
+        slice = super
+        case slice
+          when Ast::Package            then @package = slice
+          when Ast::Message, Ast::Enum then slice.package = @package
+        end
+        slice
+      end
+
       rule(option:  {name: simple(:name), value: simple(:value)}){ [name.to_s, value.to_s] }
       rule(package: {name: simple(:name)}){ Ast::Package.new(name.to_s) }
 
@@ -77,6 +91,7 @@ module Protobuf
 
       rule(message: subtree(:message)) do
         Ast::Message.new(
+          nil,
           message[:name].to_s,
           # TODO: Parslet should return nil not "" when empty. Figure out what's going on.
           message[:comments].kind_of?(Array) ? Hash[*message[:comments].map{|c| c[:meta]}.flatten.compact] : {},
@@ -85,7 +100,7 @@ module Protobuf
       end
 
       rule(enum_field: {name: simple(:name), tag: simple(:tag)}){ Ast::EnumField.new(name.to_s, tag.to_s) }
-      rule(enum: subtree(:enum)){ Ast::Enum.new(enum[:name].to_s, enum[:fields]) }
+      rule(enum: subtree(:enum)){ Ast::Enum.new(nil, enum[:name].to_s, enum[:fields]) }
     end # Transform
   end # Generate
 end # Protobuf
