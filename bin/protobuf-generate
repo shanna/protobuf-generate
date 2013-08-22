@@ -30,7 +30,7 @@ begin
     # TODO: Each language should take care of file naming conventions as well.
     postfix  = File.basename(template).gsub(/\.erb$/, '') # c.erb, h.erb, demo.c.erb becomes .c, .h, demo.c
     package  = ast.find{|e| e.kind_of?(Protobuf::Generate::Ast::Package)}
-    package  = package ? package.name : File.basename(proto).gsub(/\.proto$/)
+    package  = package ? package.name : File.basename(proto).gsub(/\.proto$/, '')
     package  = package.gsub('.', '_').gsub(/([^A-Z_])([A-Z]+)/, '\1_\2').gsub(/_+/, '_').downcase
     filename = File.join(File.dirname(proto), [package, postfix].join('.'))
 
