@@ -37,11 +37,11 @@ module Protobuf
       rule(:field_label)       { (str('required') | str('optional') | str('repeated')).as(:label) >> whitespace? }
 
       rule(:message_field)       { (field_label >> field_type >> identifier.as(:name) >> whitespace? >> equals >> integer.as(:tag) >> whitespace? >> field_option_list.maybe.as(:options) >> str(';') >> space? >> comment.maybe.as(:comment) ).as(:message_field) }
-      rule(:message_field_list)  { (message_field >> whitespace?).repeat(1).as(:fields) }
+      rule(:message_field_list)  { ((message_field | comment) >> whitespace?).repeat(1).as(:fields) }
       rule(:message)             { (comment_list.maybe.as(:comments) >> str('message') >> whitespace? >> identifier.as(:name) >> whitespace? >> bracket_open >> message_field_list.maybe >> bracket_close >> whitespace?).as(:message) }
 
       rule(:enum_field)      { (identifier.as(:name) >> whitespace? >> equals >> integer.as(:tag) >> whitespace? >> str(';')).as(:enum_field) }
-      rule(:enum_field_list) { (enum_field >> whitespace?).repeat(1).as(:fields) }
+      rule(:enum_field_list) { ((enum_field | comment) >> whitespace?).repeat(1).as(:fields) }
       rule(:enum)            { (str('enum') >> whitespace? >> identifier.as(:name) >> whitespace? >> bracket_open >> enum_field_list >> bracket_close >> whitespace?).as(:enum) }
 
       rule(:package) { (str('package') >> whitespace? >> identifier_dot_list.as(:name) >> whitespace? >> str(';') >> whitespace?).as(:package) }
