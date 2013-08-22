@@ -2,7 +2,7 @@ $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
 
 spec = Gem::Specification.new do |s|
   s.name        = 'protobuf-generate'
-  s.version     = '0.1.1'
+  s.version     = '0.2.0'
   s.summary     = 'A multi-language concrete protobuf code generator.'
   s.description = 'A simple PEG parser, AST and template based approach to code generation.'
   s.authors     = ['Shane Hanna']

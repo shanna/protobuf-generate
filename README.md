@@ -41,7 +41,7 @@ null terminated to fit within the maximum size. Bytes will just be truncated.
 
 ```
 message Message {
-  required string name = 1; // @size_max = 32
+  required string name = 1; // @size = 32
 }
 ```
 
