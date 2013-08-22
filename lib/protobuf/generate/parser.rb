@@ -19,7 +19,7 @@ module Protobuf
       rule(:bracket_close) { str('}') >> whitespace? }
 
       rule(:digit)   { match('[0-9]') }
-      rule(:integer) { str('-').maybe >> match('[1-9]') >> digit.repeat }
+      rule(:integer) { str('-').maybe >> digit.repeat(1) }
       rule(:float)   { str('-').maybe >> digit.repeat(1) >> str('.') >> digit.repeat(1) }
 
       rule(:string_special)  { match['\0\t\n\r"\\\\'] }
