@@ -29,7 +29,7 @@ module Protobuf
       rule(:identifier)          { match('[a-zA-Z_]') >> match('[a-zA-Z0-9_]').repeat }
       rule(:identifier_dot_list) { identifier >> (str('.') >> identifier).repeat }
 
-      rule(:constant) { identifier | integer | float | string }
+      rule(:constant) { identifier | float | integer | string }
 
       rule(:field_option)      { str('default').as(:name) >> whitespace? >> equals >> constant.as(:value) }
       rule(:field_option_list) { (str('[') >> whitespace? >> (field_option.as(:option) >> whitespace?).repeat(1) >> whitespace? >> str(']') >> whitespace?) }

@@ -8,21 +8,6 @@
   extern "C" {
 #endif
 
-// TODO: Export to avoid unused function errors with -Werror.
-// Remove. Have parser count type usage and only include the code if required.
-int write_raw_little_endian32(uint32_t value, uint8_t *buffer, int offset);
-int write_raw_little_endian64(uint64_t value, uint8_t *buffer, int offset);
-int write_raw_float(float value, uint8_t *buffer, int offset);
-int write_raw_double(double value, uint8_t *buffer, int offset);
-int write_raw_varint32(uint32_t value, uint8_t *buffer, int offset);
-int write_raw_varint64(uint64_t value, uint8_t *buffer, int offset);
-int read_raw_little_endian32(uint32_t *tag, const uint8_t *buffer, int offset);
-int read_raw_little_endian64(uint64_t *tag, const uint8_t *buffer, int offset);
-int read_raw_float(float *tag, const uint8_t *buffer, int offset);
-int read_raw_double(double *tag, const uint8_t *buffer, int offset);
-int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset);
-int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset);
-
 <% each do |exp| %>
   <% if exp.kind_of?(Protobuf::Generate::Ast::Enum) %>
 
@@ -39,28 +24,23 @@ int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset);
         <%= type exp.package, field.type %> <%= field.name %>;
       <% elsif type_enum?(field.type) %>
         <%= type exp.package, field.type %> <%= field.name %>;
-      <% elsif field.type =~ /double/ %>
+      <% elsif field.type == 'double' %>
         double <%= field.name %>;
-      <% elsif field.type =~ /float/ %>
+      <% elsif field.type == 'float' %>
         float <%= field.name %>;
-      <% elsif field.type =~ /int32|sint32|sfixed32/ %>
+      <% elsif %w{int32 sint32 sfixed32}.include?(field.type) %>
         int32_t <%= field.name %>;
-      <% elsif field.type =~ /int64|sint64|sfixed64/ %>
+      <% elsif %w{int64 sint64 sfixed64}.include?(field.type) %>
         int64_t <%= field.name %>;
-      <% elsif field.type =~ /uint32|fixed32/ %>
+      <% elsif %w{uint32 fixed32}.include?(field.type) %>
         uint32_t <%= field.name %>;
-      <% elsif field.type =~ /uint64|fixed64/ %>
+      <% elsif %w{uint64 fixed64}.include?(field.type) %>
         uint64_t <%= field.name %>;
-      <% elsif field.type =~ /bool/ %>
+      <% elsif field.type == 'bool' %>
         bool <%= field.name %>;
-      <% elsif field.type =~ /string/ %>
+      <% elsif %w{bytes string}.include?(field.type) %>
         struct {
-          uint8_t data[<%= field.meta["size_max"] %>];
-          size_t  size;
-        } <%= field.name %>;
-      <% elsif field.type =~ /bytes/ %>
-        struct {
-          uint8_t data[<%= field.meta["size_max"] %>];
+          uint8_t data[<%= field.meta["size"] %>];
           size_t  size;
         } <%= field.name %>;
       <% end %>
