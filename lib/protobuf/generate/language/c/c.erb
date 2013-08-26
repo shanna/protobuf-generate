@@ -77,11 +77,13 @@ static int write_raw_varint64(uint64_t value, uint8_t *buffer, int offset) {
 }
 <% end %>
 
+<% if type_count(:string, :bytes) > 0 %>
 static int write_raw_bytes(uint8_t *bytes, int bytes_size, uint8_t *buffer, int offset) {
   for (int i = 0; i < bytes_size; ++i)
     offset = write_raw_byte(*(bytes + i), buffer, offset);
   return offset;
 }
+<% end %>
 
 static inline uint32_t encode_zig_zag32(int32_t n) {
   return (n << 1) ^ (n >> 31);
@@ -435,7 +437,7 @@ static int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset) {
   }
 
   int <%= function exp.package, exp.name, 'encode' %>(const <%= type exp.package, exp.name %> *pb, uint8_t *data, size_t data_size, size_t *encoded_size) {
-    *encoded_size = <%= function exp.package, exp.name, 'write', 'delimited', 'to' %>(pb, data, -1);
+    *encoded_size = <%= function exp.package, exp.name, 'write' %>(pb, data, 0);
     return 0; // TODO: Encoding errors.
   }
 
