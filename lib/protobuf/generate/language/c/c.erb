@@ -176,63 +176,70 @@ static int read_raw_double(double *value, const uint8_t *buffer, int offset) {
 <% end %>
 
 static int read_raw_varint32(uint32_t *tag, const uint8_t *buffer, int offset) {
-  uint8_t result;
+  *tag = 0;
 
-  offset = read_raw_byte(&result, buffer, offset);
-  if (result >= 0) {
-    *tag = result;
-    return offset;
-  }
-  *tag = result & 0x7f;
-  offset = read_raw_byte(&result, buffer, offset);
-  if (result >= 0) {
-    *tag |= result << 7;
-  } else {
-    *tag |= (result & 0x7f) << 7;
-    offset = read_raw_byte(&result, buffer, offset);
-    if (result >= 0) {
-      *tag |= result << 14;
-    } else {
-      *tag |= (result & 0x7f) << 14;
-      offset = read_raw_byte(&result, buffer, offset);
-      if (result >= 0) {
-        *tag |= ((uint32_t)result) << 21;
-      } else {
-        *tag |= (((uint32_t)result) & 0x7f) << 21;
-        offset = read_raw_byte(&result, buffer, offset);
-        *tag |= ((uint32_t)result) << 28;
-        if (result < 0) {
-          /* Discard upper 32 bits. */
-          int i;
-          for (i = 0; i < 5; ++ i) {
-            offset = read_raw_byte(&result, buffer, offset);
-            if (result >= 0) {
-              return offset;
-            }
-          }
-          /* Invalid state. */
-        }
-      }
-    }
-  }
+  uint8_t b;
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint32_t)(b & 0x7f) << 0;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint32_t)(b & 0x7f) << 7;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint32_t)(b & 0x7f) << 14;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint32_t)(b & 0x7f) << 21;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint32_t)(b & 0x7f) << 28;
   return offset;
 }
 
 <% if type_count(:int64, :sint64, :uint64) > 0 %>
 static int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset) {
-  short shift = 0;
-  uint8_t b;
   *tag = 0;
-  while (shift < 64) {
-    offset = read_raw_byte(&b, buffer, offset);
-    *tag |= (uint64_t)(b & 0x7F) << shift;
-    if ((b & 0x80) == 0) {
-      return offset;
-    }
-    shift += 7;
-  }
-  /* return error code. */
-  return -1;
+
+  uint8_t b;
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 0;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 7;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 14;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 21;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 28;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 35;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 42;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 49;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 56;
+  return offset;
 }
 <% end %>
 
