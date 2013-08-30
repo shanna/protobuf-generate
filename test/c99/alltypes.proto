@@ -1,0 +1,82 @@
+// Wiretype 0, Varint.
+
+message ProtoInt32 {
+  required int32 value = 1;
+}
+
+message ProtoInt64 {
+  required int64 value = 1;
+}
+
+message ProtoUint32 {
+  required uint32 value = 1;
+}
+
+message ProtoUint64 {
+  required uint64 value = 1;
+}
+
+message ProtoSint32 {
+  required sint32 value = 1;
+}
+
+message ProtoSint64 {
+  required sint64 value = 1;
+}
+
+message ProtoBool {
+  required bool value = 1;
+}
+
+enum ProtoEnumType {
+  These = 1;
+  Are   = 2;
+  Some  = 3;
+  Names = 4;
+  End   = 99;
+}
+
+message ProtoEnum {
+  required ProtoEnumType value = 1;
+}
+
+// Wiretype 1, 64-bit.
+
+message ProtoFixed64 {
+  required fixed64 value = 1;
+}
+
+message ProtoSfixed64 {
+  required sfixed64 value = 1;
+}
+
+message ProtoDouble {
+  required double value = 1;
+}
+
+
+// Wiretype 2, Length-delimited.
+
+message ProtoString {
+  required string value = 1; // @size = 32
+}
+
+message ProtoBytes {
+  required string value = 1; // @size = 32
+}
+
+
+// Wiretype 5, 32-bit.
+
+message ProtoFixed32 {
+  required fixed32 value = 1;
+}
+
+message ProtoSfixed32 {
+  required sfixed32 value = 1;
+}
+
+message ProtoFloat {
+  required float value = 1;
+}
+
