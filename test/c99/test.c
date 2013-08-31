@@ -21,40 +21,58 @@
   } while (0)
 
 static char *test_int32() {
-  assert_encode_decode(proto_int32, 0,          "int32  1 byte value 0");
-  assert_encode_decode(proto_int32, 1,          "int32  1 byte value 1");
-  assert_encode_decode(proto_int32, 1234,       "int32  2 byte value 1234");
-  assert_encode_decode(proto_int32, 123456,     "int32  3 byte value 123456");
-  assert_encode_decode(proto_int32, 12345678,   "int32  4 byte value 12345678");
-  assert_encode_decode(proto_int32, INT32_MAX,  "int32  5 byte value " xstr(INT32_MAX));
+  assert_encode_decode(proto_int32, 0,         "int32  1 byte value 0");
+  assert_encode_decode(proto_int32, 1,         "int32  1 byte value 1");
+  assert_encode_decode(proto_int32, 1234,      "int32  2 byte value 1234");
+  assert_encode_decode(proto_int32, 123456,    "int32  3 byte value 123456");
+  assert_encode_decode(proto_int32, 12345678,  "int32  4 byte value 12345678");
+  assert_encode_decode(proto_int32, INT32_MAX, "int32  5 byte value " xstr(INT32_MAX));
 
-  assert_encode_decode(proto_int32, -1,         "int32 10 byte value -1");
-  assert_encode_decode(proto_int32, -1234,      "int32 10 byte value -1234");
-  assert_encode_decode(proto_int32, -123456,    "int32 10 byte value -123456");
-  assert_encode_decode(proto_int32, -12345678,  "int32 10 byte value -12345678");
-  assert_encode_decode(proto_int32, INT32_MIN,  "int32 10 byte value " xstr(INT32_MIN));
+  assert_encode_decode(proto_int32, -1,        "int32 10 byte value -1");
+  assert_encode_decode(proto_int32, -1234,     "int32 10 byte value -1234");
+  assert_encode_decode(proto_int32, -123456,   "int32 10 byte value -123456");
+  assert_encode_decode(proto_int32, -12345678, "int32 10 byte value -12345678");
+  assert_encode_decode(proto_int32, INT32_MIN, "int32 10 byte value " xstr(INT32_MIN));
   return 0;
 }
 
 static char *test_int64() {
-  assert_encode_decode(proto_int64, 0,            "int64  1 byte value 0");
-  assert_encode_decode(proto_int64, 1,            "int64  1 byte value 1");
-  assert_encode_decode(proto_int64, 1234,         "int64  2 byte value 1234");
-  assert_encode_decode(proto_int64, 123456,       "int64  3 byte value 123456");
-  assert_encode_decode(proto_int64, 12345678,     "int64  4 byte value 12345678");
-  assert_encode_decode(proto_int64, INT64_MAX,    "int32 10 byte value " xstr(INT64_MAX));
+  assert_encode_decode(proto_int64, 0,         "int64  1 byte value 0");
+  assert_encode_decode(proto_int64, 1,         "int64  1 byte value 1");
+  assert_encode_decode(proto_int64, 1234,      "int64  2 byte value 1234");
+  assert_encode_decode(proto_int64, 123456,    "int64  3 byte value 123456");
+  assert_encode_decode(proto_int64, 12345678,  "int64  4 byte value 12345678");
+  assert_encode_decode(proto_int64, INT64_MAX, "int32 10 byte value " xstr(INT64_MAX));
 
-  assert_encode_decode(proto_int64, -1,         "int64 10 byte value -1");
-  assert_encode_decode(proto_int64, -1234,      "int64 10 byte value -1234");
-  assert_encode_decode(proto_int64, -123456,    "int64 10 byte value -123456");
-  assert_encode_decode(proto_int64, -12345678,  "int64 10 byte value -12345678");
-  assert_encode_decode(proto_int64, INT64_MIN,  "int32 10 byte value " xstr(INT64_MIN));
+  assert_encode_decode(proto_int64, -1,        "int64 10 byte value -1");
+  assert_encode_decode(proto_int64, -1234,     "int64 10 byte value -1234");
+  assert_encode_decode(proto_int64, -123456,   "int64 10 byte value -123456");
+  assert_encode_decode(proto_int64, -12345678, "int64 10 byte value -12345678");
+  assert_encode_decode(proto_int64, INT64_MIN, "int32 10 byte value " xstr(INT64_MIN));
+  return 0;
+}
+
+static char *test_uint32() {
+  assert_encode_decode(proto_uint32, 0,          "uint32 1 byte value 0");
+  assert_encode_decode(proto_uint32, 1,          "uint32 1 byte value 1");
+  assert_encode_decode(proto_uint32, 1,          "uint32 1 byte value 1");
+  assert_encode_decode(proto_uint32, UINT32_MAX, "uint32 5 byte value " xstr(UINT32_MAX));
+  return 0;
+}
+
+static char *test_uint64() {
+  assert_encode_decode(proto_uint64, 0,          "uint64  1 byte value 0");
+  assert_encode_decode(proto_uint64, 1,          "uint64  1 byte value 1");
+  assert_encode_decode(proto_uint64, 1,          "uint64  1 byte value 1");
+  assert_encode_decode(proto_uint64, UINT64_MAX, "uint64 10 byte value " xstr(UINT64_MAX));
   return 0;
 }
 
 static char *test_all() {
   unit_run(test_int32);
   unit_run(test_int64);
+  unit_run(test_uint32);
+  unit_run(test_uint64);
   return 0;
 }
 
