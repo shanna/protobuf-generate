@@ -14,7 +14,7 @@
     name ## _t io = {io_value}; \
     name ## _encode(&io, buffer, sizeof(buffer), &size); \
     name ## _decode(&io, buffer, size, &size); \
-    mu_assert(memcmp(&io.value, &in.value, sizeof(in.value)) == 0, "encode decode " message); \
+    unit_assert(memcmp(&io.value, &in.value, sizeof(in.value)) == 0, "encode decode " message); \
   } while (0)
 
 static char *test_wire_varints() {
@@ -28,14 +28,14 @@ static char *test_wire_varints() {
 }
 
 static char *test_all() {
-  mu_run(test_wire_varints);
+  unit_run(test_wire_varints);
   return 0;
 }
 
 int main(int argc, char **argv) {
   char *result = test_all();
-  printf("tests:      %u\n", mu_tests);
-  printf("assertions: %u\n", mu_assertions);
+  printf("tests:      %u\n", unit_tests);
+  printf("assertions: %u\n", unit_assertions);
 
   if (result != 0) printf("failed:     %s\n", result);
   else printf("passed:     all\n");

@@ -7,18 +7,18 @@
 
 #pragma once
 
-static unsigned int mu_tests      = 0;
-static unsigned int mu_assertions = 0;
+static unsigned int unit_tests      = 0;
+static unsigned int unit_assertions = 0;
 
-#define mu_assert(test, message) \
+#define unit_assert(test, message) \
   do { \
-    mu_assertions++; \
+    unit_assertions++; \
     if (!(test)) return message; \
   } while (0)
 
-#define mu_run(test) \
+#define unit_run(test) \
   do { \
-    mu_tests++; \
+    unit_tests++; \
     char *message = test(); \
     if (message) return message; \
   } while (0)
