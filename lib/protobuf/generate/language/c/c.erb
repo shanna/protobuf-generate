@@ -239,6 +239,10 @@ static int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset) {
 
   offset = read_raw_byte(&b, buffer, offset);
   *tag |= (uint64_t)(b & 0x7f) << 56;
+  if ((b & 0x80) == 0) return offset;
+
+  offset = read_raw_byte(&b, buffer, offset);
+  *tag |= (uint64_t)(b & 0x7f) << 63;
   return offset;
 }
 <% end %>
@@ -478,7 +482,7 @@ static int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset) {
         {
           uint64_t value = 0;
           offset = read_raw_varint64(&value, buffer, offset);
-          pb-><%= field.name %> = (int64_t)tag;
+          pb-><%= field.name %> = (int64_t)value;
         }
         <% elsif field.type == 'sint32' %>
           offset = read_raw_varint32(&tag, buffer, offset);
@@ -525,7 +529,7 @@ static int read_raw_varint64(uint64_t *tag, const uint8_t *buffer, int offset) {
           for (size_t i = 0; i < (size_t)tag; ++i)
             offset = read_raw_byte((pb-><%= field.name %>.data + i), buffer, offset);
         <% end %>
-          break;
+        break;
       <% end %>
       }
     }
