@@ -42,13 +42,13 @@ static char *test_int64() {
   assert_encode_decode(proto_int64, 1234,      "int64  2 byte value 1234");
   assert_encode_decode(proto_int64, 123456,    "int64  3 byte value 123456");
   assert_encode_decode(proto_int64, 12345678,  "int64  4 byte value 12345678");
-  assert_encode_decode(proto_int64, INT64_MAX, "int32 10 byte value " xstr(INT64_MAX));
+  assert_encode_decode(proto_int64, INT64_MAX, "int64 10 byte value " xstr(INT64_MAX));
 
   assert_encode_decode(proto_int64, -1,        "int64 10 byte value -1");
   assert_encode_decode(proto_int64, -1234,     "int64 10 byte value -1234");
   assert_encode_decode(proto_int64, -123456,   "int64 10 byte value -123456");
   assert_encode_decode(proto_int64, -12345678, "int64 10 byte value -12345678");
-  assert_encode_decode(proto_int64, INT64_MIN, "int32 10 byte value " xstr(INT64_MIN));
+  assert_encode_decode(proto_int64, INT64_MIN, "int64 10 byte value " xstr(INT64_MIN));
   return 0;
 }
 
@@ -68,11 +68,45 @@ static char *test_uint64() {
   return 0;
 }
 
+static char *test_sint32() {
+  assert_encode_decode(proto_sint32, 0,         "sint32  1 byte value 0");
+  assert_encode_decode(proto_sint32, 1,         "sint32  1 byte value 1");
+  assert_encode_decode(proto_sint32, 1234,      "sint32  2 byte value 1234");
+  assert_encode_decode(proto_sint32, 123456,    "sint32  3 byte value 123456");
+  assert_encode_decode(proto_sint32, 12345678,  "sint32  4 byte value 12345678");
+  assert_encode_decode(proto_sint32, INT32_MAX, "sint32  5 byte value " xstr(INT32_MAX));
+
+  assert_encode_decode(proto_sint32, -1,        "sint32 10 byte value -1");
+  assert_encode_decode(proto_sint32, -1234,     "sint32 10 byte value -1234");
+  assert_encode_decode(proto_sint32, -123456,   "sint32 10 byte value -123456");
+  assert_encode_decode(proto_sint32, -12345678, "sint32 10 byte value -12345678");
+  assert_encode_decode(proto_sint32, INT32_MIN, "sint32 10 byte value " xstr(INT32_MIN));
+  return 0;
+}
+
+static char *test_sint64() {
+  assert_encode_decode(proto_sint64, 0,         "sint64 value 0");
+  assert_encode_decode(proto_sint64, 1,         "sint64 value 1");
+  assert_encode_decode(proto_sint64, 1234,      "sint64 value 1234");
+  assert_encode_decode(proto_sint64, 123456,    "sint64 value 123456");
+  assert_encode_decode(proto_sint64, 12345678,  "sint64 value 12345678");
+  assert_encode_decode(proto_sint64, INT64_MAX, "sint32 value " xstr(INT64_MAX));
+
+  assert_encode_decode(proto_sint64, -1,        "sint64 value -1");
+  assert_encode_decode(proto_sint64, -1234,     "sint64 value -1234");
+  assert_encode_decode(proto_sint64, -123456,   "sint64 value -123456");
+  assert_encode_decode(proto_sint64, -12345678, "sint64 value -12345678");
+  assert_encode_decode(proto_sint64, INT64_MIN, "sint64 value " xstr(INT64_MIN));
+  return 0;
+}
+
 static char *test_all() {
   unit_run(test_int32);
   unit_run(test_int64);
   unit_run(test_uint32);
   unit_run(test_uint64);
+  unit_run(test_sint32);
+  unit_run(test_sint64);
   return 0;
 }
 
