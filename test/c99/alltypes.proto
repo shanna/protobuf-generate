@@ -29,11 +29,11 @@ message ProtoBool {
 }
 
 enum ProtoEnumType {
-  These = 1;
-  Are   = 2;
-  Some  = 3;
-  Names = 4;
-  End   = 99;
+  One        = 1;
+  Two        = 2;
+  Three      = 3;
+  Four       = 4;
+  NinetyNine = 99;
 }
 
 message ProtoEnum {

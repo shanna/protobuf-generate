@@ -1,6 +1,7 @@
 #include "alltypes.h"
 #include "unit.h"
 
+#include <float.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -100,6 +101,51 @@ static char *test_sint64() {
   return 0;
 }
 
+static char *test_bool() {
+  assert_encode_decode(proto_bool, true,  "bool value true");
+  assert_encode_decode(proto_bool, false, "bool value false");
+  assert_encode_decode(proto_bool, 1,     "bool value 1");
+  assert_encode_decode(proto_bool, 0,     "bool value 0");
+  return 0;
+}
+
+static char *test_enum() {
+  assert_encode_decode(proto_enum, PROTO_ENUM_TYPE_ONE,         "enum value " str(PROTO_ENUM_TYPE_ONE));
+  assert_encode_decode(proto_enum, PROTO_ENUM_TYPE_TWO,         "enum value " str(PROTO_ENUM_TYPE_TWO));
+  assert_encode_decode(proto_enum, PROTO_ENUM_TYPE_NINETY_NINE, "enum value " str(PROTO_ENUM_TYPE_NINETY_NINE));
+  return 0;
+}
+
+static char *test_fixed64() {
+  assert_encode_decode(proto_fixed64, 0,          "fixed64  1 byte value 0");
+  assert_encode_decode(proto_fixed64, 1,          "fixed64  1 byte value 1");
+  assert_encode_decode(proto_fixed64, 1,          "fixed64  1 byte value 1");
+  assert_encode_decode(proto_fixed64, UINT64_MAX, "fixed64 10 byte value " xstr(UINT64_MAX));
+  return 0;
+}
+
+static char *test_sfixed64() {
+  assert_encode_decode(proto_sfixed64, 0,         "sfixed64 value 0");
+  assert_encode_decode(proto_sfixed64, 1,         "sfixed64 value 1");
+  assert_encode_decode(proto_sfixed64, 1234,      "sfixed64 value 1234");
+  assert_encode_decode(proto_sfixed64, 123456,    "sfixed64 value 123456");
+  assert_encode_decode(proto_sfixed64, 12345678,  "sfixed64 value 12345678");
+  assert_encode_decode(proto_sfixed64, INT64_MAX, "sfixed32 value " xstr(INT64_MAX));
+
+  assert_encode_decode(proto_sfixed64, -1,        "sfixed64 value -1");
+  assert_encode_decode(proto_sfixed64, -1234,     "sfixed64 value -1234");
+  assert_encode_decode(proto_sfixed64, -123456,   "sfixed64 value -123456");
+  assert_encode_decode(proto_sfixed64, -12345678, "sfixed64 value -12345678");
+  assert_encode_decode(proto_sfixed64, INT64_MIN, "sfixed64 value " xstr(INT64_MIN));
+  return 0;
+}
+
+static char *test_double() {
+  assert_encode_decode(proto_double, DBL_MAX, "double value " xstr(DBL_MAX));
+  assert_encode_decode(proto_double, DBL_MIN, "double value " xstr(DBL_MIN));
+  return 0;
+}
+
 static char *test_all() {
   unit_run(test_int32);
   unit_run(test_int64);
@@ -107,6 +153,11 @@ static char *test_all() {
   unit_run(test_uint64);
   unit_run(test_sint32);
   unit_run(test_sint64);
+  unit_run(test_bool);
+  unit_run(test_enum);
+  unit_run(test_fixed64);
+  unit_run(test_sfixed64);
+  unit_run(test_double);
   return 0;
 }
 
