@@ -146,6 +146,70 @@ static char *test_double() {
   return 0;
 }
 
+static char *test_string() {
+  size_t  size;
+  uint8_t buffer[256];
+
+  proto_string_t io;
+  proto_string_t in;
+  strcpy((char *)in.value.data, "test");
+  in.value.size = 5;
+
+  proto_string_encode(&in, buffer, sizeof(buffer), &size);
+  proto_string_decode(&io, buffer, size, &size);
+
+  unit_assert((io.value.size == in.value.size),                           "encode decode string size 5");
+  unit_assert(memcmp(&io.value.data, &in.value.data, in.value.size) == 0, "encode decode string \"test\"");
+  return 0;
+}
+
+static char *test_bytes() {
+  size_t  size;
+  uint8_t buffer[256];
+
+  proto_bytes_t io;
+  proto_bytes_t in;
+  memcpy(in.value.data, "test", 4);
+  in.value.size = 4;
+
+  proto_bytes_encode(&in, buffer, sizeof(buffer), &size);
+  proto_bytes_decode(&io, buffer, size, &size);
+
+  unit_assert((io.value.size == in.value.size),                           "encode decode bytes size 4");
+  unit_assert(memcmp(&io.value.data, &in.value.data, in.value.size) == 0, "encode decode bytes \"test\"");
+  return 0;
+}
+
+static char *test_fixed32() {
+  assert_encode_decode(proto_fixed32, 0,          "fixed32  1 byte value 0");
+  assert_encode_decode(proto_fixed32, 1,          "fixed32  1 byte value 1");
+  assert_encode_decode(proto_fixed32, 1,          "fixed32  1 byte value 1");
+  assert_encode_decode(proto_fixed32, UINT32_MAX, "fixed32 10 byte value " xstr(UINT32_MAX));
+  return 0;
+}
+
+static char *test_sfixed32() {
+  assert_encode_decode(proto_sfixed32, 0,         "sfixed32 value 0");
+  assert_encode_decode(proto_sfixed32, 1,         "sfixed32 value 1");
+  assert_encode_decode(proto_sfixed32, 1234,      "sfixed32 value 1234");
+  assert_encode_decode(proto_sfixed32, 123456,    "sfixed32 value 123456");
+  assert_encode_decode(proto_sfixed32, 12345678,  "sfixed32 value 12345678");
+  assert_encode_decode(proto_sfixed32, INT32_MAX, "sfixed32 value " xstr(INT32_MAX));
+
+  assert_encode_decode(proto_sfixed32, -1,        "sfixed32 value -1");
+  assert_encode_decode(proto_sfixed32, -1234,     "sfixed32 value -1234");
+  assert_encode_decode(proto_sfixed32, -123456,   "sfixed32 value -123456");
+  assert_encode_decode(proto_sfixed32, -12345678, "sfixed32 value -12345678");
+  assert_encode_decode(proto_sfixed32, INT32_MIN, "sfixed32 value " xstr(INT32_MIN));
+  return 0;
+}
+
+static char *test_float() {
+  assert_encode_decode(proto_float, FLT_MAX, "float value " xstr(FLT_MAX));
+  assert_encode_decode(proto_float, FLT_MIN, "float value " xstr(FLT_MIN));
+  return 0;
+}
+
 static char *test_all() {
   unit_run(test_int32);
   unit_run(test_int64);
@@ -158,6 +222,11 @@ static char *test_all() {
   unit_run(test_fixed64);
   unit_run(test_sfixed64);
   unit_run(test_double);
+  unit_run(test_string);
+  unit_run(test_bytes);
+  unit_run(test_fixed32);
+  unit_run(test_sfixed32);
+  unit_run(test_float);
   return 0;
 }
 
